@@ -1,0 +1,6 @@
+qtpy
+qtmodern
+PyYaml
+redis
+numpy
+pydaqmx

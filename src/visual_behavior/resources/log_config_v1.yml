@@ -1,0 +1,68 @@
+---
+version: 1
+disable_existing_loggers: False
+formatters:
+    log_server:
+        datefmt: '%Y-%m-%d %H:%M:%S'
+        format: '%(asctime)s\n%(name)s\n%(levelname)s\n%(funcName)s (%(filename)s:%(lineno)d)\n%(message)s'
+
+    detailed:
+        datefmt: '%m/%d/%Y %I:%M:%S %p'
+        format: '%(asctime)s, %(levelname)s, %(module)s::%(lineno)s, %(message)s'
+
+    simple:
+        datefmt: '%m/%d/%Y %I:%M:%S %p'
+        format: '%(asctime)s, %(message)s'
+
+handlers:
+    socket_handler:
+        class: logging.handlers.SocketHandler
+        level: WARNING
+        formatter: log_server
+        host: 10.128.60.82
+        port: 9000
+
+    email_handler:
+        class: logging.handlers.SMTPHandler
+        level: INFO
+        formatter: detailed
+        mailhost: aicas-1.corp.alleninstitute.org
+        fromaddr: rigs@alleninstitute.org
+        toaddrs:
+          - rossh@alleninstitute.org
+        subject: problem
+
+    console_handler:
+        class: logging.StreamHandler
+        level: INFO
+        formatter: simple
+        stream: ext://sys.stdout
+
+    file_handler:
+        class: logging.handlers.RotatingFileHandler
+        level: INFO
+        formatter: simple
+        filename: log.log
+        maxBytes: 10485760 # 10MB
+        backupCount: 20
+        encoding: utf8
+
+    debug_file_handler:
+        class: logging.handlers.RotatingFileHandler
+        level: ERROR
+        formatter: detailed
+        filename: debug.log
+        maxBytes: 10485760 # 10MB
+        backupCount: 20
+        encoding: utf8
+
+loggers:
+    my_module:
+        level: WARNING
+        handlers: [console_handler, debug_file_handler,  socket_handler]
+        propagate: no
+
+root:
+    level: INFO
+    handlers: [console_handler, file_handler, debug_file_handler, socket_handler]
+...

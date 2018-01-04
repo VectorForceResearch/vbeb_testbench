@@ -1,0 +1,44 @@
+---
+version: 1
+
+# software configuration
+installation:
+    root_dir: c:/ProgramData/AIBS_MPE/VisualBehavior
+
+redis:
+    db: 0
+    port: 6379
+    host: localhost
+
+
+# make one for each axis
+# command and control
+default_velocity_mm_per_s: 200
+default_acceleration_mm_per_s2: 2500
+default_stepsize_mm: 10
+
+# hardware attributes
+steps_per_revolution: 15 # reference workflow document
+distance_per_revolution_units: tbd
+backlash_correction_mm: safe_number tbd
+
+# phidget board
+stage_serial_no: 279899
+platform_id: test
+channels:
+    x: 0
+    y: 1
+    z: 3
+
+# nidaq  # resolves to /dev9/port0/line5 for example
+device_name: 'Dev9'
+port: 0
+lines:
+    x: 5
+    y: 3
+    z: 1
+
+threshold_low: 0  # low means limit switch hit
+threshold_high: 8 # high means movable
+
+...
