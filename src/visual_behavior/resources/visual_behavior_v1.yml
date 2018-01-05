@@ -40,7 +40,9 @@ lines:
 
 threshold_low: 0  # low means limit switch hit
 threshold_high: 8 # high means movable
+
 analog_0: ao0
 analog_1: ao1
-
+sol_1: port1/line2
+sol_2: port2/line0
 ...
