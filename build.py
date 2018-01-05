@@ -12,7 +12,7 @@ use_plugin('python.distutils')
 use_plugin('python.core')
 use_plugin('python.install_dependencies')
 
-use_plugin('python.flake8')
+#use_plugin('python.flake8')
 use_plugin('pybuilder_pytest')
 
 # pybuilder_pytest runs even without a task
@@ -20,12 +20,12 @@ use_plugin('pybuilder_pytest')
 if 'windows' not in platform.system().lower() or sys.version_info.major == 3:
     use_plugin('python.sphinx')
     default_task = ['install_dependencies',
-                    'analyze',
+ #p                   'analyze',
                     'sphinx_generate_documentation',
                     'publish']
 else:
     default_task = ['install_dependencies',
-                    'analyze',
+#                    'analyze',
                     'sphinx_build',
                     'publish']
 

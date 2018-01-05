@@ -23,12 +23,12 @@ distance_per_revolution_units: tbd
 backlash_correction_mm: safe_number tbd
 
 # phidget board
-stage_serial_no: 279899
+stage_serial_no: 428170
 platform_id: test
 channels:
     x: 0
     y: 1
-    z: 3
+    z: 2
 
 # nidaq  # resolves to /dev9/port0/line5 for example
 device_name: 'Dev9'
@@ -40,5 +40,7 @@ lines:
 
 threshold_low: 0  # low means limit switch hit
 threshold_high: 8 # high means movable
+analog_0: ao0
+analog_1: ao1
 
 ...

@@ -500,10 +500,10 @@
      <set>Qt::AlignCenter</set>
     </property>
     <property name="maximum">
-     <number>100</number>
+     <number>10000</number>
     </property>
     <property name="value">
-     <number>10</number>
+     <number>100</number>
     </property>
    </widget>
    <widget class="QSpinBox" name="sb_xy_stepsize">
@@ -530,7 +530,7 @@
      <number>10000</number>
     </property>
     <property name="value">
-     <number>10</number>
+     <number>100</number>
     </property>
    </widget>
    <widget class="QLabel" name="label_16">

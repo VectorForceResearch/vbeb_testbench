@@ -330,17 +330,23 @@ class PhidgetStage(Stage):
 
     @property
     def is_moving(self):
-        moving = []
-        for a in self._axes:
-            moving.append(True) if a.getIsMoving() else moving.append(False)
-        return moving
-
+        try:
+            moving = []
+            for a in self._axes:
+                moving.append(True) if a.getIsMoving() else moving.append(False)
+            return moving
+        except Exception:
+            print('Error detecting is moving')
+            return [False] * 3
     @property
     def is_engaged(self):
-        engaged = []
-        for a in self._axes:
-            engaged.append(a.getEngaged())
-        return engaged
+        try:
+            engaged = []
+            for a in self._axes:
+                engaged.append(a.getEngaged())
+            return engaged
+        except PhidgetException:
+            return [False] * 3
 
     def _motion_queue(self):
         """

@@ -12,10 +12,10 @@ from qtpy.QtGui import QPixmap, QIcon
 from qtpy.QtWidgets import *
 from qtpy.QtCore import QTimer
 import PyDAQmx
-
+import sys
 import visual_behavior
-from .visual_behavior import PhidgetStage
-from .visual_behavior import InitializationError
+from visual_behavior import PhidgetStage
+from visual_behavior import InitializationError
 
 from Phidget22.Net import PhidgetException
 import datetime
@@ -27,6 +27,7 @@ import numpy as np
 from ctypes import byref
 from itertools import product
 import time
+
 
 class AxisControl(object):
     leds = None
@@ -123,6 +124,10 @@ class StageUI(QMainWindow):
         # noinspection PyUnresolvedReferences
         self.limit_timer.timeout.connect(self.limit_timeout)
 
+        # self.drive_timer = QTimer()
+        # noinspection PyUnresolvedReferences
+        # self.axis_timer.timeout.connect(self.drive_timeout)
+
         """
         Corresponds to the inputs to receive from NIDAQ to check if a limit switch has been tripped.
         The intent is to call a stop on the moving axis.
@@ -133,9 +138,14 @@ class StageUI(QMainWindow):
             channel = f'/{self.config.device_name}/port{self.config.port}/line{line_name}'.encode()
             task.CreateDIChan(channel, b'', PyDAQmx.DAQmx_Val_ChanPerLine)
             self.nidaq_dis[axis] = task
+
+
         self.axis_last_move = {'x': 0,
                                'y': 0,
                                'z': 0}
+        self.axis_disabled = {'x': 0,
+                              'y': 0,
+                              'z': 0}
 
         """
         This corresponds to the signaling for ao0 and ao1 that releases the motor brake after the limit switch has been
@@ -157,29 +167,46 @@ class StageUI(QMainWindow):
         self.task_a1.CreateAOVoltageChan(f'/{self.config.device_name}/{self.config.analog_1}'.encode(), b'',
                                          -10.0, 10.0, PyDAQmx.DAQmx_Val_Volts, None)
 
-        self.analog_table = {'x': [np.zeros(100), np.ones(100)*5],
-                             'y': [np.ones(100)*5, np.zeros(100)],
-                             'z': [np.ones(100)*5, np.ones(100)*5],
+        self.analog_table = {'x': [np.zeros(100), np.ones(100) * 5],
+                             'y': [np.ones(100) * 5, np.zeros(100)],
+                             'z': [np.ones(100) * 5, np.ones(100) * 5],
                              'reset': [np.zeros(100), np.zeros(100)]}
+        self.current_drive_axis = -1
+        self.data_values = [0, 0, 0]
 
     def drive_to_home(self):
+
         dialog = QMessageBox()
         dialog.setWindowTitle('Stage Controller Notification')
-        dialog.setText('Driving stage to home position.  Please wait.')
-        dialog.setInformativeText('It is normal to hear clicks. ')
+        dialog.setText('Click continue to drive the stage to the home position.')
+        dialog.setInformativeText('It is normal to hear clicks during this process.\n\You can click "Stop" to abort '
+                                  'this operation and manually drive the stage.')
         dialog.exec_()
+        QTimer.singleShot(100, self.drive_timeout)
 
-        for index, axis in enumerate(self.axes):
-            position = self.stage.position
-            position[index] += 10000
-            self.stage.move_to(position)
-            while self.stage.is_moving[index]:
-                time.sleep(.1)
-            position = self.stage.position
-            position[index] += 1
-            self.stage.move_to(position)
+    def drive_timeout(self):
+        if -1 < self.current_drive_axis < len(self.axes) and self.stage.is_moving[self.current_drive_axis]:
+            QTimer.singleShot(1000, self.drive_timeout)
+            return
 
-        self.log('Complete')
+        self.current_drive_axis += 1
+
+        if self.current_drive_axis > len(self.axes) - 1:
+            self.signal_zero_stage()
+            self.register_coordinates('HOME', self.ui.lbl_coords_home)
+            self.log('Stage registered at HOME')
+            return
+
+        self.axis_last_move[self.axes[self.current_drive_axis]] = 1
+
+        self.log(f'Attempting to drive the {self.axes[self.current_drive_axis]} axis to the home position.')
+        position = self.stage.position
+        if self.current_drive_axis < 2:
+            position[self.current_drive_axis] -= 10000
+        else:
+            position[self.current_drive_axis] += 10000
+        self.stage.move_to(position)
+        QTimer.singleShot(1000, self.drive_timeout)
 
     def limit_timeout(self):
         """
@@ -188,22 +215,36 @@ class StageUI(QMainWindow):
         """
         # axis need better abstraction
         # temporary hack       axis plus = 1       axis minus = -1
+
         buttons = {'x': [None, self.ui.btn_x_plus, self.ui.btn_x_minus],
                    'y': [None, self.ui.btn_y_plus, self.ui.btn_y_minus],
                    'z': [None, self.ui.btn_z_plus, self.ui.btn_z_minus]}
 
+        axmap = {'x': 0,
+                 'y': 1,
+                 'z': 2}
+
         read = int32()
+
         data = np.zeros(1000, dtype=np.uint32)
         for axis, task in self.nidaq_dis.items():
             task.ReadDigitalU32(-1, .1, PyDAQmx.DAQmx_Val_GroupByChannel, data, 1000, byref(read), None)
-            if data[0] <= self.config.threshold_low and self.axis_last_move[axis]: # limit switch was tripped
-                if self.axis_last_move[axis]:
-                    self.axis_step(self.axes[axis])  # kludgy way to stop axis movement
+            if data[0] == 0 and self.axis_last_move[axis]:  # limit switch was tripped
+                if self.axis_disabled[axis] == 0:
+                    self.axis_disabled[axis] = self.axis_last_move[axis]
+                    self.stage._axes[axmap[axis]].setEngaged(False)
                     buttons[axis][self.axis_last_move[axis]].setEnabled(False)
                     self.axis_last_move[axis] = 0
-            elif  data[0] >= self.config.threshold_high:
-                    buttons[axis][1].setEnabled(True)
-                    buttons[axis][2].setEnabled(True)
+                elif self.axis_last_move[axis] == self.axis_disabled[axis]:
+                    self.stage._axes[axmap[axis]].setEngaged(False)
+                    buttons[axis][self.axis_last_move[axis]].setEnabled(False)
+                    self.axis_last_move[axis] = 0
+
+            elif data[0] >= 1:
+                buttons[axis][1].setEnabled(True)
+                buttons[axis][2].setEnabled(True)
+            self.data_values[axmap[axis]] = data[0]
+            self.display_position()
 
     def update_table(self):
         """
@@ -214,7 +255,10 @@ class StageUI(QMainWindow):
         # hacky, will fix when limit switches come through
         for axis, m in enumerate(moving):
             if not m:
-                self.stage._axes[axis].setEngaged(False)
+                try:
+                    self.stage._axes[axis].setEngaged(False)
+                except PhidgetException:
+                    pass
 
         engaged = self.stage.is_engaged
         for i in range(3):
@@ -393,7 +437,8 @@ class StageUI(QMainWindow):
         try:
             coordinates = self.stage.position
             text = f'Position: ({coordinates[0]}, {coordinates[1]}, {coordinates[2]})'
-            self.ui.lbl_position.setText(text)
+            text2 = f' || Voltage: ({self.data_values[0]}, {self.data_values[1]}, {self.data_values[2]}'
+            self.ui.lbl_position.setText(f'{text}{text2}')
             for i in range(3):
                 item = self.ui.tbl_stage.item(i, 2).setText(str(coordinates[i]))
         except PhidgetException as err:
@@ -420,6 +465,8 @@ class StageUI(QMainWindow):
         z_channel = int(self.ui.tbl_stage.item(2, self.col_port).text())
 
         self.stage = PhidgetStage(serial, x_channel, y_channel, z_channel)
+
+
         for name, axis in self.axes_widgets.items():
             try:
                 self.stage.initialize_axis(axis.index)
@@ -428,7 +475,7 @@ class StageUI(QMainWindow):
             except InitializationError as err:
                 self.ui.tbl_stage.cellWidget(axis.index, self.col_connected).setIcon(self.icon_red)
                 self.log(err)
-
+        self.stage.stop_motion()
         # self.ui.le_serial.setEnabled(False)
         self.ui.btn_connect.setText('Disconnect')
         self.ui.btn_connect.clicked.disconnect()
@@ -438,9 +485,10 @@ class StageUI(QMainWindow):
         self.log('Connected to stage.')
         self.stage.position_changed_callback = self.on_position_changed
         self.load_stored_values()
-
+        self.ui.btn_stop.setEnabled(True)
         self.axis_timer.start(500)
         self.limit_timer.start(100)
+        self.drive_to_home()
 
     def signal_close_stage_connection(self):
         """
@@ -451,9 +499,6 @@ class StageUI(QMainWindow):
         self.stage.close()
         for axis in self.axes_widgets:
             self.axes_widgets[axis].led_color = 'clear'
-        self.ui.sb_x_channel.setEnabled(True)
-        self.ui.sb_y_channel.setEnabled(True)
-        self.ui.sb_z_channel.setEnabled(True)
         self.ui.le_serial.setEnabled(True)
         self.ui.btn_connect.setText('Connect')
         self.ui.btn_connect.clicked.disconnect()
@@ -475,20 +520,23 @@ class StageUI(QMainWindow):
         :param sb_step:
         :return:
         """
-        if self.axis_disabled[axis]:
-            self.task_a0.StartTask()
-            self.task_a1.StartTask()
-            self.task_a0.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table[axis][0],
-                                        int32(100), None)
-            self.task_a1.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel,  self.analog_table[axis][1],
-                                        int32(100), None)
-            self.task_a0.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_zero, int32(100),
-                                        None)
-            self.task_a1.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_zero, int32(100),
-                                        None)
-            self.task_a0.StopTask()
-            self.task_a1.StopTask()
-
+        # if self.axis_disabled[axis]:
+        # if not self.axis_last_move[axis]:
+        #     self.task_a0.StartTask()
+        #     self.task_a1.StartTask()
+        #     self.task_a0.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table[axis][0],
+        #                                 int32(100), None)
+        #     self.task_a1.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table[axis][1],
+        #                                 int32(100), None)
+        #     self.task_a0.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table['reset'][0],
+        #                                 int32(100), None)
+        #
+        #     self.task_a1.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table['reset'][1],
+        #                                 int32(100), None)
+        #
+        #     self.task_a0.StopTask()
+        #     self.task_a1.StopTask()
+        self.axis_last_move[self.axes[axis]] = sign
         position = self.stage.position
         step = sb_step.value() if sb_step else 0
         position[axis] += step * sign
