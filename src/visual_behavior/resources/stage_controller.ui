@@ -874,6 +874,50 @@
      </size>
     </property>
    </widget>
+   <widget class="QPushButton" name="btn_extract">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>260</y>
+      <width>75</width>
+      <height>71</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Retract</string>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>65</width>
+      <height>65</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="btn_extend">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>100</y>
+      <width>75</width>
+      <height>71</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Extend</string>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>65</width>
+      <height>65</height>
+     </size>
+    </property>
+   </widget>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
