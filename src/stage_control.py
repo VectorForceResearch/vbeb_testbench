@@ -125,9 +125,6 @@ class StageUI(QMainWindow):
         # noinspection PyUnresolvedReferences
         self.limit_timer.timeout.connect(self.limit_timeout)
 
-        # self.drive_timer = QTimer()
-        # noinspection PyUnresolvedReferences
-        # self.axis_timer.timeout.connect(self.drive_timeout)
 
         """
         Corresponds to the inputs to receive from NIDAQ to check if a limit switch has been tripped.
@@ -140,13 +137,15 @@ class StageUI(QMainWindow):
             task.CreateDIChan(channel, b'', PyDAQmx.DAQmx_Val_ChanPerLine)
             self.nidaq_dis[axis] = task
 
-
         self.axis_last_move = {'x': 0,
                                'y': 0,
                                'z': 0}
         self.axis_disabled = {'x': 0,
                               'y': 0,
                               'z': 0}
+
+        self.air_sol0
+        self.air_sol1
 
         """
         This corresponds to the signaling for ao0 and ao1 that releases the motor brake after the limit switch has been
