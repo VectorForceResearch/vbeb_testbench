@@ -51,7 +51,6 @@ class AxisControl(object):
                              green=QPixmap(visual_behavior.__path__[0] + '/resources/led_green.png').scaledToHeight(20))
         self.led_color = 'clear'
 
-
     @property
     def led_color(self):
         return self.led.getPixmap()
@@ -137,15 +136,10 @@ class StageUI(QMainWindow):
             task.CreateDIChan(channel, b'', PyDAQmx.DAQmx_Val_ChanPerLine)
             self.nidaq_dis[axis] = task
 
-        self.axis_last_move = {'x': 0,
-                               'y': 0,
-                               'z': 0}
-        self.axis_disabled = {'x': 0,
-                              'y': 0,
-                              'z': 0}
-
-        self.air_sol0 = None
-        self.air_sol1 = None
+        self.air_sol1 = PyDAQmx.CreateDOChan(f'/{self.config.device_name}/self.config.sol_1', "",
+                                             PyDAQmx.DAQmx_Val_ChanForAllLines)
+        self.air_sol2 = PyDAQmx.CreateDOChan(f'/{self.config.device_name}/self.config.sol_2', "",
+                                             PyDAQmx.DAQmx_Val_ChanForAllLines)
 
         """
         This corresponds to the signaling for ao0 and ao1 that releases the motor brake after the limit switch has been
@@ -175,9 +169,11 @@ class StageUI(QMainWindow):
         self.current_drive_axis = -1
         self.data_values = [0, 0, 0]
 
-
     def drive_to_home(self):
+        """
 
+        :return:
+        """
         dialog = QMessageBox()
         dialog.setWindowTitle('Stage Controller Notification')
         dialog.setText('Click continue to drive the stage to the home position.')
@@ -187,6 +183,10 @@ class StageUI(QMainWindow):
         QTimer.singleShot(100, self.drive_timeout)
 
     def drive_timeout(self):
+        """
+
+        :return:
+        """
         if -1 < self.current_drive_axis < len(self.axes) and self.stage.is_moving[self.current_drive_axis]:
             QTimer.singleShot(1000, self.drive_timeout)
             return
@@ -198,8 +198,6 @@ class StageUI(QMainWindow):
             self.register_coordinates('HOME', self.ui.lbl_coords_home)
             self.log('Stage registered at HOME')
             return
-
-        self.axis_last_move[self.axes[self.current_drive_axis]] = 1
 
         self.log(f'Attempting to drive the {self.axes[self.current_drive_axis]} axis to the home position.')
         position = self.stage.position
@@ -393,11 +391,37 @@ class StageUI(QMainWindow):
         self.stage.zero_axes()
         self.log(f'axes zeroed')
 
+    def lickspout_extend(self):
+        self.air_sol1.StartTask()
+        self.air_sol1.WriteDigitalLines(1, 1, 10.0, PyDAQmx.DAQmx_Val_GroupByChannel, np.ones(10, dtype=np.uint8), None,
+                                        None)
+        self.air_sol2.WriteDigitalLines(1, 1, 10.0)
+        self.air_sol2.StartTask()
+        self.air_sol2.WriteDigitalLines(1, 1, 10.0, PyDAQmx.DAQmx_Val_GroupByChannel, np.zeros(10, dtype=np.uint8),
+                                        None, None)
+        self.air_sol1.StopTask()
+        self.air_sol2.StopTask()
+
+    def lickspout_retract(self):
+        self.air_sol1.StartTask()
+        self.air_sol1.WriteDigitalLines(1, 1, 10.0, PyDAQmx.DAQmx_Val_GroupByChannel, np.zeros(10, dtype=np.uint8),
+                                        None,
+                                        None)
+        self.air_sol2.WriteDigitalLines(1, 1, 10.0)
+        self.air_sol2.StartTask()
+        self.air_sol2.WriteDigitalLines(1, 1, 10.0, PyDAQmx.DAQmx_Val_GroupByChannel, np.ones(10, dtype=np.uint8),
+                                        None, None)
+        self.air_sol1.StopTask()
+        self.air_sol2.StopTask()
+
     def setup_signals(self):
         """
         Connects signals to widgets.
         :return:
         """
+        self.ui.btn_extend.clicked.connect(self.lickspout_extend)
+        self.ui.btn_retract.clicked.connect(self.lickspout_retract)
+
         self.ui.btn_zero.clicked.connect(self.signal_zero_stage)
         self.ui.btn_connect.clicked.connect(self.signal_connect_to_stage)
         self.ui.btn_register_home.clicked.connect(partial(self.register_coordinates, 'HOME', self.ui.lbl_coords_home))
@@ -507,9 +531,20 @@ class StageUI(QMainWindow):
         self.stage.close()
 
     def signal_stop(self):
+        """
+
+        :return:
+        """
         self.stage.stop_motion()
 
     def move_off_limit(self, axis, step, sign=1):
+        """
+
+        :param axis:
+        :param step:
+        :param sign:
+        :return:
+        """
         self.task_a0.StartTask()
         self.task_a1.StartTask()
         print('releasing break', self.analog_table[self.axes[axis]][0], self.analog_table[self.axes[axis]][1])
@@ -532,7 +567,6 @@ class StageUI(QMainWindow):
         self.task_a0.StopTask()
         self.task_a1.StopTask()
 
-
     def axis_step(self, axis, sb_step=None, sign=1):
         """
         Step the axis by a value defined by sb_step.
@@ -542,7 +576,6 @@ class StageUI(QMainWindow):
         :param sb_step:
         :return:
         """
-        self.axis_last_move[self.axes[axis]] = sign
         position = self.stage.position
         step = sb_step.value() if sb_step else 0
         position[axis] += step * sign
