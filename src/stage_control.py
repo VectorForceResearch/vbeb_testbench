@@ -232,17 +232,13 @@ class StageUI(QMainWindow):
         data = np.zeros(1000, dtype=np.uint32)
         for axis, task in self.nidaq_dis.items():
             task.ReadDigitalU32(-1, .1, PyDAQmx.DAQmx_Val_GroupByChannel, data, 1000, byref(read), None)
-            if data[0] == 0 and self.axis_last_move[axis]:  # limit switch was tripped
+            if data[0]:  # limit switch was tripped
                 self.stage._axes[axmap[axis]].setEngaged(False)
                 position = self.stage.position
-                position[axmap[axis]] += 10
-                if axis == 'z':
-                    position[2] -= 20
-
-
-                self.stage.append_move(position)
-                #buttons[axis][self.axis_last_move[axis]].setEnabled(False)
-                self.axis_last_move[axis] = 0
+                if axmap[axis] < 2:
+                    self.move_off_limit(axmap[axis], 10, 1)
+                else:
+                    self.move_off_limit(axmap[axis], 10)
 
             elif data[0] >= 1:
                 buttons[axis][1].setEnabled(True)
@@ -511,9 +507,31 @@ class StageUI(QMainWindow):
         self.stage.close()
 
     def signal_stop(self):
-        self.axis_step(0)
-        self.axis_step(1)
-        self.axis_step(2)
+        self.stage.stop_motion()
+
+    def move_off_limit(self, axis, step, sign=1):
+        self.task_a0.StartTask()
+        self.task_a1.StartTask()
+        print('releasing break', self.analog_table[self.axes[axis]][0], self.analog_table[self.axes[axis]][1])
+
+        self.task_a0.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel,
+                                    self.analog_table[self.axes[axis]][0],
+                                    int32(100), None)
+        self.task_a1.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel,
+                                    self.analog_table[self.axes[axis]][1],
+                                    int32(100), None)
+
+        position = self.stage.position
+        position[axis] += step * sign
+        self.stage.append_move(position)
+
+        self.task_a0.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table['reset'][0],
+                                    int32(100), None)
+        self.task_a1.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table['reset'][1],
+                                    int32(100), None)
+        self.task_a0.StopTask()
+        self.task_a1.StopTask()
+
 
     def axis_step(self, axis, sb_step=None, sign=1):
         """
@@ -524,22 +542,6 @@ class StageUI(QMainWindow):
         :param sb_step:
         :return:
         """
-
-        if not self.axis_last_move[self.axes[axis]]:
-            self.task_a0.StartTask()
-            self.task_a1.StartTask()
-            print('releasing break')
-            self.task_a0.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table[self.axes[axis]][0],
-                                        int32(100), None)
-            self.task_a1.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table[self.axes[axis]][1],
-                                        int32(100), None)
-            self.task_a0.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table['reset'][0],
-                                        int32(100), None)
-            self.task_a1.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table['reset'][1],
-                                        int32(100), None)
-
-            self.task_a0.StopTask()
-            self.task_a1.StopTask()
         self.axis_last_move[self.axes[axis]] = sign
         position = self.stage.position
         step = sb_step.value() if sb_step else 0
