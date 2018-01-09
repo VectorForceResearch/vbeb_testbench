@@ -2,12 +2,13 @@ import os.path
 import platform
 import threading
 import logging
-from queue import Queue
 from Phidget22.Devices.Stepper import *
 from Phidget22.Net import *
 from abc import abstractmethod
 from .exceptions import *
-
+import asyncio
+from asyncio import Queue
+import time
 
 class Stage(object):
     def __init__(self):
@@ -52,6 +53,13 @@ class Stage(object):
         :return:
         """
 
+    @abstractmethod
+    def process_queue(self):
+        """
+
+        :return:
+        """
+
 
 class MockStage(Stage):
     def __init__(self, serial=12345):
@@ -60,6 +68,7 @@ class MockStage(Stage):
         self._serial = serial
         self._queue = Queue()
         self._position = [0, 0, 0]
+        self._axes = [None, None, None]
 
     @property
     def initialized(self):
@@ -94,6 +103,8 @@ class MockStage(Stage):
         return True
 
 
+
+
 class PhidgetStage(Stage):
     def __init__(self, serial=0, x_channel=0, y_channel=1, z_channel=3):
         """
@@ -121,6 +132,7 @@ class PhidgetStage(Stage):
         self._position_changed_callback = None
         self._queue_active = False
         self._queue = Queue()
+
 
     @property
     def serial(self):
@@ -306,8 +318,6 @@ class PhidgetStage(Stage):
         :return:
         """
         try:
-            with self._queue.mutex:
-                self._queue.queue.clear()
             for a in self._axes:
                 a.setEngaged(False)
         except Exception:
@@ -330,20 +340,14 @@ class PhidgetStage(Stage):
     @property
     def is_moving(self):
         try:
-            moving = []
-            for a in self._axes:
-                moving.append(True) if a.getIsMoving() else moving.append(False)
-            return moving
-        except Exception:
-            print('Error detecting is moving')
+            return [axis.getIsMoving() for axis in self._axes]
+        except PhidgetException:
             return [False] * 3
+
     @property
     def is_engaged(self):
         try:
-            engaged = []
-            for a in self._axes:
-                engaged.append(a.getEngaged())
-            return engaged
+            return [axis.getEngaged() for axis in self._axes]
         except PhidgetException:
             return [False] * 3
 
@@ -385,3 +389,20 @@ class PhidgetStage(Stage):
         code = e.code
         details = e.details
         print("Phidget Error %i : %s" % (code, details))
+
+    def process_queue(self):
+        while self._queue_active:
+            for axis in self._axes:
+                if not axis.getIsMoving():
+                    axis.setEngaged(False)
+
+            if not any(self.is_moving) and not self._queue.empty():
+                pos = self._queue.get()
+                self.move_to(pos)
+
+            time.sleep(.1)
+
+    def start(self, loop=None, executor=None):
+        if loop is None:
+            loop = asyncio.get_event_loop()
+            return loop.run_in_executor(executor, self.process_queue)

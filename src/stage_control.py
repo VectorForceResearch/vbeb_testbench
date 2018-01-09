@@ -170,6 +170,7 @@ class StageUI(QMainWindow):
                              'y': [np.ones(100) * 5, np.zeros(100)],
                              'z': [np.ones(100) * 5, np.ones(100) * 5],
                              'reset': [np.zeros(100), np.zeros(100)]}
+
         self.current_drive_axis = -1
         self.data_values = [0, 0, 0]
 
@@ -233,9 +234,10 @@ class StageUI(QMainWindow):
                 if self.axis_disabled[axis] == 0:
                     position = self.stage.position
                     position[axmap[axis]] += 100
-                    self.stage.move_to(position)
+                    self.stage.append_move(position)
+                    #self.stage.move_to(position)
                     self.axis_disabled[axis] = self.axis_last_move[axis]
-                    self.stage._axes[axmap[axis]].setEngaged(False)
+                    #self.stage._axes[axmap[axis]].setEngaged(False)
                     #buttons[axis][self.axis_last_move[axis]].setEnabled(False)
                     self.axis_last_move[axis] = 0
                 elif self.axis_last_move[axis] == self.axis_disabled[axis]:
