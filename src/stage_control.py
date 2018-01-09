@@ -51,6 +51,7 @@ class AxisControl(object):
                              green=QPixmap(visual_behavior.__path__[0] + '/resources/led_green.png').scaledToHeight(20))
         self.led_color = 'clear'
 
+
     @property
     def led_color(self):
         return self.led.getPixmap()
@@ -174,6 +175,7 @@ class StageUI(QMainWindow):
         self.current_drive_axis = -1
         self.data_values = [0, 0, 0]
 
+
     def drive_to_home(self):
 
         dialog = QMessageBox()
@@ -231,19 +233,16 @@ class StageUI(QMainWindow):
         for axis, task in self.nidaq_dis.items():
             task.ReadDigitalU32(-1, .1, PyDAQmx.DAQmx_Val_GroupByChannel, data, 1000, byref(read), None)
             if data[0] == 0 and self.axis_last_move[axis]:  # limit switch was tripped
-                if self.axis_disabled[axis] == 0:
-                    position = self.stage.position
-                    position[axmap[axis]] += 100
-                    self.stage.append_move(position)
-                    #self.stage.move_to(position)
-                    self.axis_disabled[axis] = self.axis_last_move[axis]
-                    #self.stage._axes[axmap[axis]].setEngaged(False)
-                    #buttons[axis][self.axis_last_move[axis]].setEnabled(False)
-                    self.axis_last_move[axis] = 0
-                elif self.axis_last_move[axis] == self.axis_disabled[axis]:
-                    self.stage._axes[axmap[axis]].setEngaged(False)
-                    #buttons[axis][self.axis_last_move[axis]].setEnabled(False)
-                    self.axis_last_move[axis] = 0
+                self.stage._axes[axmap[axis]].setEngaged(False)
+                position = self.stage.position
+                position[axmap[axis]] += 10
+                if axis == 'z':
+                    position[2] -= 20
+
+
+                self.stage.append_move(position)
+                #buttons[axis][self.axis_last_move[axis]].setEnabled(False)
+                self.axis_last_move[axis] = 0
 
             elif data[0] >= 1:
                 buttons[axis][1].setEnabled(True)
@@ -411,7 +410,7 @@ class StageUI(QMainWindow):
                                                             self.ui.lbl_coords_origin))
         self.ui.btn_goto_origin.clicked.connect(partial(self.go_to_coordinates, 'ORIGIN'))
         self.ui.btn_goto_safe.clicked.connect(partial(self.go_to_coordinates, 'SAFE'))
-        self.ui.btn_goto_home.clicked.connect(partial(self.go_to_coordinates, 'HOME'))
+        self.ui.btn_goto_home.clicked.connect(self.drive_to_home)
         self.ui.btn_register_custom.clicked.connect(self.register_custom)
         self.ui.btn_goto_custom.clicked.connect(self.go_to_custom)
         self.ui.list_custom.itemClicked.connect(self.custom_item_clicked)
@@ -492,7 +491,8 @@ class StageUI(QMainWindow):
         self.ui.btn_stop.setEnabled(True)
         self.axis_timer.start(500)
         self.limit_timer.start(100)
-        #self.drive_to_home()
+        self.stage.start()
+        self.drive_to_home()
 
     def signal_close_stage_connection(self):
         """
@@ -528,6 +528,7 @@ class StageUI(QMainWindow):
         if not self.axis_last_move[self.axes[axis]]:
             self.task_a0.StartTask()
             self.task_a1.StartTask()
+            print('releasing break')
             self.task_a0.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table[self.axes[axis]][0],
                                         int32(100), None)
             self.task_a1.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table[self.axes[axis]][1],
@@ -543,7 +544,7 @@ class StageUI(QMainWindow):
         position = self.stage.position
         step = sb_step.value() if sb_step else 0
         position[axis] += step * sign
-        self.stage.move_to(position)
+        self.stage.append_move(position)
 
     def log(self, message):
         """

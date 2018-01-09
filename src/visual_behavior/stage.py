@@ -7,7 +7,7 @@ from Phidget22.Net import *
 from abc import abstractmethod
 from .exceptions import *
 import asyncio
-from asyncio import Queue
+from queue import Queue
 import time
 
 class Stage(object):
@@ -132,7 +132,7 @@ class PhidgetStage(Stage):
         self._position_changed_callback = None
         self._queue_active = False
         async_loop = asyncio.get_event_loop()
-        self._queue = Queue(loop = async_loop)
+        self._queue = Queue()
 
 
     @property
@@ -286,6 +286,7 @@ class PhidgetStage(Stage):
         :param coordinates:
         :return:
         """
+
         if not isinstance(coordinates, (list, tuple)) or len(coordinates) != len(self._axes):
             logging.error(f'Expected coordinates to be list-like of length {len(self._axes)}')
             raise InvalidCoordinatesError
@@ -364,9 +365,7 @@ class PhidgetStage(Stage):
         :return:
         """
         while self._queue_active:
-            print('activate')
             for a in self._axes:
-                print('disengaging ...')
                 if not a.getIsMoving():
                     a.setEngaged(False)
 
@@ -397,7 +396,6 @@ class PhidgetStage(Stage):
         details = e.details
         print("Phidget Error %i : %s" % (code, details))
 
-
     def process_queue(self):
         while self._queue_active:
             for axis in self._axes:
@@ -405,12 +403,16 @@ class PhidgetStage(Stage):
                     axis.setEngaged(False)
 
             if not any(self.is_moving) and not self._queue.empty():
-                pos = self._queue.get()
-                self.move_to(pos)
+                try:
+                    pos = self._queue.get_nowait()
+                    self.move_to(pos)
+                except asyncio.QueueEmpty:
+                    pass
 
             time.sleep(.1)
 
     def start(self, loop=None, executor=None):
         if loop is None:
             loop = asyncio.get_event_loop()
-            return loop.run_in_executor(executor, self.process_queue)
+        self._queue_active = True
+        return loop.run_in_executor(executor, self.process_queue)
