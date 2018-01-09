@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# TODO:  Mouse ID
 
 import socket
 
@@ -201,6 +202,7 @@ class StageUI(QMainWindow):
         position = self.stage.position
         if self.current_drive_axis < 2:
             position[self.current_drive_axis] -= 10000
+
         else:
             position[self.current_drive_axis] += 10000
         self.stage.move_to(position)
@@ -229,13 +231,16 @@ class StageUI(QMainWindow):
             task.ReadDigitalU32(-1, .1, PyDAQmx.DAQmx_Val_GroupByChannel, data, 1000, byref(read), None)
             if data[0] == 0 and self.axis_last_move[axis]:  # limit switch was tripped
                 if self.axis_disabled[axis] == 0:
+                    position = self.stage.position
+                    position[axmap[axis]] += 100
+                    self.stage.move_to(position)
                     self.axis_disabled[axis] = self.axis_last_move[axis]
                     self.stage._axes[axmap[axis]].setEngaged(False)
-                    buttons[axis][self.axis_last_move[axis]].setEnabled(False)
+                    #buttons[axis][self.axis_last_move[axis]].setEnabled(False)
                     self.axis_last_move[axis] = 0
                 elif self.axis_last_move[axis] == self.axis_disabled[axis]:
                     self.stage._axes[axmap[axis]].setEngaged(False)
-                    buttons[axis][self.axis_last_move[axis]].setEnabled(False)
+                    #buttons[axis][self.axis_last_move[axis]].setEnabled(False)
                     self.axis_last_move[axis] = 0
 
             elif data[0] >= 1:
@@ -435,7 +440,7 @@ class StageUI(QMainWindow):
         try:
             coordinates = self.stage.position
             text = f'Position: ({coordinates[0]}, {coordinates[1]}, {coordinates[2]})'
-            text2 = f' || Voltage: ({self.data_values[0]}, {self.data_values[1]}, {self.data_values[2]}'
+            text2 = f' || Powered: ({min(1,self.data_values[0])}, {self.data_values[1]}, {self.data_values[2]})'
             self.ui.lbl_position.setText(f'{text}{text2}')
             for i in range(3):
                 item = self.ui.tbl_stage.item(i, 2).setText(str(coordinates[i]))
@@ -485,7 +490,7 @@ class StageUI(QMainWindow):
         self.ui.btn_stop.setEnabled(True)
         self.axis_timer.start(500)
         self.limit_timer.start(100)
-        self.drive_to_home()
+        #self.drive_to_home()
 
     def signal_close_stage_connection(self):
         """
@@ -517,22 +522,21 @@ class StageUI(QMainWindow):
         :param sb_step:
         :return:
         """
-        # if self.axis_disabled[axis]:
-        # if not self.axis_last_move[axis]:
-        #     self.task_a0.StartTask()
-        #     self.task_a1.StartTask()
-        #     self.task_a0.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table[axis][0],
-        #                                 int32(100), None)
-        #     self.task_a1.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table[axis][1],
-        #                                 int32(100), None)
-        #     self.task_a0.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table['reset'][0],
-        #                                 int32(100), None)
-        #
-        #     self.task_a1.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table['reset'][1],
-        #                                 int32(100), None)
-        #
-        #     self.task_a0.StopTask()
-        #     self.task_a1.StopTask()
+
+        if not self.axis_last_move[self.axes[axis]]:
+            self.task_a0.StartTask()
+            self.task_a1.StartTask()
+            self.task_a0.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table[self.axes[axis]][0],
+                                        int32(100), None)
+            self.task_a1.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table[self.axes[axis]][1],
+                                        int32(100), None)
+            self.task_a0.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table['reset'][0],
+                                        int32(100), None)
+            self.task_a1.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table['reset'][1],
+                                        int32(100), None)
+
+            self.task_a0.StopTask()
+            self.task_a1.StopTask()
         self.axis_last_move[self.axes[axis]] = sign
         position = self.stage.position
         step = sb_step.value() if sb_step else 0
