@@ -131,7 +131,8 @@ class PhidgetStage(Stage):
         self._initialized = [False] * 3
         self._position_changed_callback = None
         self._queue_active = False
-        self._queue = Queue()
+        async_loop = asyncio.get_event_loop()
+        self._queue = Queue(loop = async_loop)
 
 
     @property
@@ -318,8 +319,14 @@ class PhidgetStage(Stage):
         :return:
         """
         try:
+            while not self._queue.empty():
+                self._queue.get()
+                self._queue.task_done()
+
             for a in self._axes:
                 a.setEngaged(False)
+        except asyncio.QueueEmpty:
+            pass
         except Exception:
             raise StageNotConnectedError
 
@@ -389,6 +396,7 @@ class PhidgetStage(Stage):
         code = e.code
         details = e.details
         print("Phidget Error %i : %s" % (code, details))
+
 
     def process_queue(self):
         while self._queue_active:
