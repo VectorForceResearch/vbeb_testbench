@@ -124,7 +124,6 @@ class StageUI(QMainWindow):
         # noinspection PyUnresolvedReferences
         self.limit_timer.timeout.connect(self.limit_timeout)
 
-
         """
         Corresponds to the inputs to receive from NIDAQ to check if a limit switch has been tripped.
         The intent is to call a stop on the moving axis.
@@ -143,8 +142,8 @@ class StageUI(QMainWindow):
                               'y': 0,
                               'z': 0}
 
-        self.air_sol0
-        self.air_sol1
+        self.air_sol0 = None
+        self.air_sol1 = None
 
         """
         This corresponds to the signaling for ao0 and ao1 that releases the motor brake after the limit switch has been
@@ -464,7 +463,6 @@ class StageUI(QMainWindow):
         z_channel = int(self.ui.tbl_stage.item(2, self.col_port).text())
 
         self.stage = PhidgetStage(serial, x_channel, y_channel, z_channel)
-
 
         for name, axis in self.axes_widgets.items():
             try:

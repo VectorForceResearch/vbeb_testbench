@@ -260,7 +260,6 @@ class PhidgetStage(Stage):
         if not isinstance(coordinates, (list, tuple)) or len(coordinates) != len(self._axes):
             logging.error(f'Expected coordinates to be list-like of length {len(self._axes)}')
             raise InvalidCoordinatesError
-
         try:
             for index, axis in enumerate(self._axes):
                 axis.setEngaged(1)
