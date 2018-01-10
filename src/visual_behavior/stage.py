@@ -336,6 +336,7 @@ class PhidgetStage(Stage):
 
         :return:
         """
+        self._queue_active = False
         for axis in self._axes:
             try:
                 if axis.getEngaged():
@@ -343,7 +344,6 @@ class PhidgetStage(Stage):
                 axis.close()
             except PhidgetException as err:
                 print(err.details)
-        self._queue.join()
 
     @property
     def is_moving(self):
@@ -397,6 +397,10 @@ class PhidgetStage(Stage):
         print("Phidget Error %i : %s" % (code, details))
 
     def process_queue(self):
+        """
+
+        :return:
+        """
         while self._queue_active:
             for axis in self._axes:
                 if not axis.getIsMoving():
