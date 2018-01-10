@@ -9,7 +9,7 @@ import socket
 import time
 from functools import partial
 from itertools import product
-
+import sys
 import PyDAQmx
 import numpy as np
 import redis
@@ -20,11 +20,44 @@ from PyDAQmx import *
 from qtmodern import styles, windows
 from qtpy import uic, QtCore
 from qtpy.QtCore import QTimer
-from qtpy.QtGui import QIcon
+from qtpy.QtGui import QIcon, QPixmap
 from qtpy.QtWidgets import *
 from visual_behavior import InitializationError
 from visual_behavior import PhidgetStage
+from ctypes import byref
+from threading import Lock
+import asyncio
 
+
+class AxisControl(object):
+    leds = None
+
+    def __init__(self, index, lcd_velocity=None, dial_velocity=None, lcd_accel=None, dial_accel=None, btn_plus=None,
+                 btn_minus=None, led=None):
+        self.index = index
+        self.lcd_velocity = lcd_velocity
+        self.dial_velocity = dial_velocity
+        self.lcd_accel = lcd_accel
+        self.dial_accel = dial_accel
+        self.btn_plus = btn_plus
+        self.btn_minus = btn_minus
+        self.led = led
+
+        if not self.leds:
+            self.leds = dict(clear=QPixmap(visual_behavior.__path__[0] + '/resources/led_clear.png').scaledToHeight(20),
+                             blue=QPixmap(visual_behavior.__path__[0] + '/resources/led_blue.png').scaledToHeight(20),
+                             red=QPixmap(visual_behavior.__path__[0] + '/resources/led_red.png').scaledToHeight(20),
+                             green=QPixmap(visual_behavior.__path__[0] + '/resources/led_green.png').scaledToHeight(20))
+        self.led_color = 'clear'
+
+    @property
+    def led_color(self):
+        return self.led.getPixmap()
+
+    @led_color.setter
+    def led_color(self, color):
+        if color in self.leds:
+            self.led.setPixmap(self.leds[color])
 
 class StageUI(QMainWindow):
     col_connected = 0
@@ -62,6 +95,20 @@ class StageUI(QMainWindow):
                                 self.ui.btn_extend, self.ui.btn_extract]
 
         self.axes = ['x', 'y', 'z']
+        self.x_controls = AxisControl(0,
+                                      btn_plus=self.ui.btn_x_plus,
+                                      btn_minus=self.ui.btn_x_minus,
+                                      led=self.ui.lbl_x_channel)
+        self.y_controls = AxisControl(1,
+                                      btn_plus=self.ui.btn_y_plus,
+                                      btn_minus=self.ui.btn_y_minus,
+                                      led=self.ui.lbl_y_channel)
+        self.z_controls = AxisControl(2,
+                                      btn_plus=self.ui.btn_z_plus,
+                                      btn_minus=self.ui.btn_z_minus,
+                                      led=self.ui.lbl_z_channel)
+
+        self.axes_widgets = dict(x=self.x_controls, y=self.y_controls, z=self.z_controls)
 
         self.axis_timer = QTimer()
         # noinspection PyUnresolvedReferences
@@ -119,6 +166,11 @@ class StageUI(QMainWindow):
         self._limit_tripped = [False, False, False]
         self._limit_direction = [-1, -1, 1]
         self._homing_mode = False
+        self._limit_lock = asyncio.Lock()
+
+        self.loop = asyncio.get_event_loop()
+
+
 
     def setup_db(self):
         """
@@ -128,7 +180,7 @@ class StageUI(QMainWindow):
         db = redis.StrictRedis(host=self.config.redis.host, db=self.config.redis.db, port=self.config.redis.port)
         db_string = f'{self.config.redis.host}:{self.config.redis.port} ({self.config.redis.db})'
         try:
-            self.db.info()
+            db.info()
             self.log(f'Connected to database: {db_string}')
         except ConnectionRefusedError as err:
             self.log(f'Failed to connected to database: {db_string}: {err}')
@@ -140,7 +192,7 @@ class StageUI(QMainWindow):
 
         :return:
         """
-        self.current_drive_axis = -1
+
         dialog = QMessageBox()
         dialog.setWindowTitle('Stage Controller Notification')
         dialog.setText('Click continue to drive the stage to the home position.')
@@ -160,8 +212,9 @@ class StageUI(QMainWindow):
     def drive_axis_home(self, axis):
         self.log(f'Driving axis {self.axes[axis]} home.')
         position = self.stage.position
-        position[axis] += (10000 * self._limit_direction)
-        self.stage.move_to(position)
+        position[axis] += (10000 * self._limit_direction[axis])
+        self.stage.append_move(position)
+
 
     def drive_timeout(self):
         """
@@ -212,11 +265,13 @@ class StageUI(QMainWindow):
         for axis, task in self.nidaq_dis.items():
             task.ReadDigitalU32(-1, .1, PyDAQmx.DAQmx_Val_GroupByChannel, data, 1000, byref(read), None)
             if data[0] == 0 and not self._limit_tripped[axmap[axis]]:  # limit switch was tripped
+                self.log(f'{axis} is limit tripped.  Retreating axis.')
+                self.display_position()
                 self.stage._axes[axmap[axis]].setEngaged(False)
                 self._limit_tripped[axmap[axis]] = True
-                #self.stage._axes[axmap[axis]].setOnStoppedHandler(self.stop_handler)
-                self.move_off_limit(axmap[axis], 5)
-
+                print('calling move off limit')
+                self.loop.run_in_executor(None, self.move_off_limit,axmap[axis], 5)
+                print('called')
             elif data[0] >= 1:
                 buttons[axis][1].setEnabled(True)
                 buttons[axis][2].setEnabled(True)
@@ -501,7 +556,7 @@ class StageUI(QMainWindow):
         self.axis_timer.start(500)
         self.limit_timer.start(100)
         self.stage.start()
-        self.drive_to_home()
+        #self.drive_to_home()
 
     def signal_close_stage_connection(self):
         """
@@ -534,10 +589,15 @@ class StageUI(QMainWindow):
         :param sign:
         :return:
         """
+        print('acquiring lock', axis)
+        #with (yield from self._limit_lock):
 
+        #self._limit_lock.acquire()
+        print('acquired', axis)
+        self.log(f'Releasing break for axis {self.axes[axis]}')
         self.task_a0.StartTask()
         self.task_a1.StartTask()
-        # print('releasing break', self.analog_table[self.axes[axis]][0], self.analog_table[self.axes[axis]][1])
+
 
         self.task_a0.WriteAnalogF64(1000, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel,
                                     self.analog_table[self.axes[axis]][0],
@@ -548,11 +608,10 @@ class StageUI(QMainWindow):
 
         read = int32()
         data = np.zeros(1000, dtype=np.uint32)
-        task = self.nidaq_dis[self.axis[axis]]
+        task = self.nidaq_dis[self.axes[axis]]
         while not data[0]:
-            if self.stage._axes.getIsMoving():
+            if self.stage._axes[axis].getIsMoving():
                 time.sleep(.1)
-                continue
             position = self.stage.position
             position[axis] += (step * self._limit_direction[axis] * -1)
             self.stage.move_to(position)
@@ -566,11 +625,18 @@ class StageUI(QMainWindow):
         self.task_a1.StopTask()
 
         self._limit_tripped[axis] = False
+
+        self.log(f'{self.axes[axis]} moved off limit.')
+        print('homing mode = ', self._homing_mode)
         if self._homing_mode:
+
             axis += 1
             if axis > len(self.axes) - 1:
                 self._homing_mode = False
+                self.signal_zero_stage()
+                self.log('Stage Homed.')
             else:
+                print('calling drive axis home', axis)
                 self.drive_axis_home(axis)
 
     def axis_step(self, axis, sb_step=None, sign=1):
