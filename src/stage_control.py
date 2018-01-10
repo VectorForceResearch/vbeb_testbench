@@ -136,10 +136,12 @@ class StageUI(QMainWindow):
             task.CreateDIChan(channel, b'', PyDAQmx.DAQmx_Val_ChanPerLine)
             self.nidaq_dis[axis] = task
 
-        self.air_sol1 = PyDAQmx.CreateDOChan(f'/{self.config.device_name}/self.config.sol_1', "",
-                                             PyDAQmx.DAQmx_Val_ChanForAllLines)
-        self.air_sol2 = PyDAQmx.CreateDOChan(f'/{self.config.device_name}/self.config.sol_2', "",
-                                             PyDAQmx.DAQmx_Val_ChanForAllLines)
+        self.air_sol1 = Task()
+        self.air_sol1.CreateDOChan(f'/{self.config.device_name}/{self.config.sol_1}'.encode(), ''.encode(),
+                                   PyDAQmx.DAQmx_Val_ChanForAllLines)
+        self.air_sol2 = Task()
+        self.air_sol2.CreateDOChan(f'/{self.config.device_name}/{self.config.sol_2}'.encode(), ''.encode(),
+                                   PyDAQmx.DAQmx_Val_ChanForAllLines)
 
         """
         This corresponds to the signaling for ao0 and ao1 that releases the motor brake after the limit switch has been
@@ -161,19 +163,20 @@ class StageUI(QMainWindow):
         self.task_a1.CreateAOVoltageChan(f'/{self.config.device_name}/{self.config.analog_1}'.encode(), b'',
                                          -10.0, 10.0, PyDAQmx.DAQmx_Val_Volts, None)
 
-        self.analog_table = {'x': [np.zeros(100), np.ones(100) * 5],
-                             'y': [np.ones(100) * 5, np.zeros(100)],
-                             'z': [np.ones(100) * 5, np.ones(100) * 5],
-                             'reset': [np.zeros(100), np.zeros(100)]}
+        self.analog_table = {'x': [np.zeros(1000), np.ones(1000) * 5],
+                             'y': [np.ones(1000) * 5, np.zeros(1000)],
+                             'z': [np.ones(1000) * 5, np.ones(1000) * 5],
+                             'reset': [np.zeros(1000), np.zeros(1000)]}
 
         self.current_drive_axis = -1
         self.data_values = [0, 0, 0]
-
+        self._ignore_axis = [False, False, False]
     def drive_to_home(self):
         """
 
         :return:
         """
+        self.current_drive_axis = -1
         dialog = QMessageBox()
         dialog.setWindowTitle('Stage Controller Notification')
         dialog.setText('Click continue to drive the stage to the home position.')
@@ -230,19 +233,33 @@ class StageUI(QMainWindow):
         data = np.zeros(1000, dtype=np.uint32)
         for axis, task in self.nidaq_dis.items():
             task.ReadDigitalU32(-1, .1, PyDAQmx.DAQmx_Val_GroupByChannel, data, 1000, byref(read), None)
-            if data[0]:  # limit switch was tripped
+            if data[0] == 0 and not self._ignore_axis[axmap[axis]]:  # limit switch was tripped
                 self.stage._axes[axmap[axis]].setEngaged(False)
+                self._ignore_axis[axmap[axis]] = True
                 position = self.stage.position
                 if axmap[axis] < 2:
-                    self.move_off_limit(axmap[axis], 10, 1)
+                    self.move_off_limit(axmap[axis], 5)
                 else:
-                    self.move_off_limit(axmap[axis], 10)
+                    self.move_off_limit(axmap[axis], -5)
+                self.stage._axes[axmap[axis]].setOnStoppedHandler(self.stophandler)
 
             elif data[0] >= 1:
                 buttons[axis][1].setEnabled(True)
                 buttons[axis][2].setEnabled(True)
             self.data_values[axmap[axis]] = data[0]
             self.display_position()
+
+    def do_nothing(self, arg):
+        pass
+
+    def stophandler(self, arg):
+        arg.setOnStoppedHandler(None)
+        if arg == self.stage._axes[0]:
+            self._ignore_axis[0] = False
+        if arg == self.stage._axes[1]:
+            self._ignore_axis[1] = False
+        if arg == self.stage._axes[2]:
+            self._ignore_axis[2] = False
 
     def update_table(self):
         """
@@ -420,7 +437,7 @@ class StageUI(QMainWindow):
         :return:
         """
         self.ui.btn_extend.clicked.connect(self.lickspout_extend)
-        self.ui.btn_retract.clicked.connect(self.lickspout_retract)
+        self.ui.btn_extract.clicked.connect(self.lickspout_retract)
 
         self.ui.btn_zero.clicked.connect(self.signal_zero_stage)
         self.ui.btn_connect.clicked.connect(self.signal_connect_to_stage)
@@ -545,27 +562,32 @@ class StageUI(QMainWindow):
         :param sign:
         :return:
         """
+
         self.task_a0.StartTask()
         self.task_a1.StartTask()
-        print('releasing break', self.analog_table[self.axes[axis]][0], self.analog_table[self.axes[axis]][1])
+        #print('releasing break', self.analog_table[self.axes[axis]][0], self.analog_table[self.axes[axis]][1])
 
-        self.task_a0.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel,
+        self.task_a0.WriteAnalogF64(1000, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel,
                                     self.analog_table[self.axes[axis]][0],
                                     int32(100), None)
-        self.task_a1.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel,
+        self.task_a1.WriteAnalogF64(1000, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel,
                                     self.analog_table[self.axes[axis]][1],
-                                    int32(100), None)
+                                    int32(1000), None)
+
 
         position = self.stage.position
-        position[axis] += step * sign
-        self.stage.append_move(position)
+        position[axis] += step
 
-        self.task_a0.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table['reset'][0],
-                                    int32(100), None)
-        self.task_a1.WriteAnalogF64(100, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table['reset'][1],
-                                    int32(100), None)
+        self.stage.move_to(position)
+
+        self.task_a0.WriteAnalogF64(1000, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table['reset'][0],
+                                    int32(1000), None)
+        self.task_a1.WriteAnalogF64(1000, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, self.analog_table['reset'][1],
+                                    int32(1000), None)
         self.task_a0.StopTask()
         self.task_a1.StopTask()
+
+        self._ignore_axis[axis] = False
 
     def axis_step(self, axis, sb_step=None, sign=1):
         """
