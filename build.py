@@ -13,7 +13,7 @@ use_plugin('python.core')
 use_plugin('python.install_dependencies')
 
 #use_plugin('python.flake8')
-use_plugin('pybuilder_pytest')
+#use_plugin('pybuilder_pytest')
 
 # pybuilder_pytest runs even without a task
 # pybuilder is currently broken on windows / py27 / sphinx plugin combination

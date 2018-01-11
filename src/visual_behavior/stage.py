@@ -270,7 +270,6 @@ class PhidgetStage(Stage):
         :param coordinates:
         :return:
         """
-        print('move_to: ', coordinates)
         if not isinstance(coordinates, (list, tuple)) or len(coordinates) != len(self._axes):
             logging.error(f'Expected coordinates to be list-like of length {len(self._axes)}')
             raise InvalidCoordinatesError

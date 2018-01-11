@@ -156,9 +156,9 @@ class StageUI(QMainWindow):
         self.task_a1.CreateAOVoltageChan(f'/{self.config.device_name}/{self.config.analog_1}'.encode(), b'',
                                          -10.0, 10.0, PyDAQmx.DAQmx_Val_Volts, None)
 
-        self.analog_table = {'x': [np.zeros(1000), np.ones(1000) * 5],
+        self.analog_table = {'z': [np.zeros(1000), np.ones(1000) * 5],
                              'y': [np.ones(1000) * 5, np.zeros(1000)],
-                             'z': [np.ones(1000) * 5, np.ones(1000) * 5],
+                             'x': [np.ones(1000) * 5, np.ones(1000) * 5],
                              'reset': [np.zeros(1000), np.zeros(1000)]}
 
         self.current_drive_axis = -1
@@ -166,7 +166,7 @@ class StageUI(QMainWindow):
         self._limit_tripped = [False, False, False]
         self._limit_direction = [-1, -1, 1]
         self._homing_mode = False
-        self._limit_lock = asyncio.Lock()
+        self._limit_lock = Lock()
 
         self.loop = asyncio.get_event_loop()
 
@@ -269,9 +269,7 @@ class StageUI(QMainWindow):
                 self.display_position()
                 self.stage._axes[axmap[axis]].setEngaged(False)
                 self._limit_tripped[axmap[axis]] = True
-                print('calling move off limit')
                 self.loop.run_in_executor(None, self.move_off_limit,axmap[axis], 5)
-                print('called')
             elif data[0] >= 1:
                 buttons[axis][1].setEnabled(True)
                 buttons[axis][2].setEnabled(True)
@@ -439,7 +437,6 @@ class StageUI(QMainWindow):
         self.air_sol1.StartTask()
         self.air_sol1.WriteDigitalLines(1, 1, 10.0, PyDAQmx.DAQmx_Val_GroupByChannel, np.ones(10, dtype=np.uint8), None,
                                         None)
-        self.air_sol2.WriteDigitalLines(1, 1, 10.0)
         self.air_sol2.StartTask()
         self.air_sol2.WriteDigitalLines(1, 1, 10.0, PyDAQmx.DAQmx_Val_GroupByChannel, np.zeros(10, dtype=np.uint8),
                                         None, None)
@@ -451,7 +448,6 @@ class StageUI(QMainWindow):
         self.air_sol1.WriteDigitalLines(1, 1, 10.0, PyDAQmx.DAQmx_Val_GroupByChannel, np.zeros(10, dtype=np.uint8),
                                         None,
                                         None)
-        self.air_sol2.WriteDigitalLines(1, 1, 10.0)
         self.air_sol2.StartTask()
         self.air_sol2.WriteDigitalLines(1, 1, 10.0, PyDAQmx.DAQmx_Val_GroupByChannel, np.ones(10, dtype=np.uint8),
                                         None, None)
@@ -589,16 +585,13 @@ class StageUI(QMainWindow):
         :param sign:
         :return:
         """
-        print('acquiring lock', axis)
-        #with (yield from self._limit_lock):
 
-        #self._limit_lock.acquire()
-        print('acquired', axis)
         self.log(f'Releasing break for axis {self.axes[axis]}')
+        self.log(f'sending: {self.analog_table[self.axes[axis]][0]} and {self.analog_table[self.axes[axis]][1]}')
         self.task_a0.StartTask()
         self.task_a1.StartTask()
 
-
+        self.log(f'sending: {self.analog_table[self.axes[axis]][0]} and {self.analog_table[self.axes[axis]][1]}')
         self.task_a0.WriteAnalogF64(1000, False, -1, PyDAQmx.DAQmx_Val_GroupByChannel,
                                     self.analog_table[self.axes[axis]][0],
                                     int32(100), None)
@@ -625,9 +618,8 @@ class StageUI(QMainWindow):
         self.task_a1.StopTask()
 
         self._limit_tripped[axis] = False
-
+        #self._limit_lock.release()
         self.log(f'{self.axes[axis]} moved off limit.')
-        print('homing mode = ', self._homing_mode)
         if self._homing_mode:
 
             axis += 1
@@ -636,7 +628,6 @@ class StageUI(QMainWindow):
                 self.signal_zero_stage()
                 self.log('Stage Homed.')
             else:
-                print('calling drive axis home', axis)
                 self.drive_axis_home(axis)
 
     def axis_step(self, axis, sb_step=None, sign=1):
