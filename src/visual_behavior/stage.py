@@ -415,8 +415,11 @@ class PhidgetStage(Stage):
 
             time.sleep(.1)
 
-    def start(self, loop=None, executor=None):
+    def start_queue(self, loop=None, executor=None):
         if loop is None:
             loop = asyncio.get_event_loop()
         self._queue_active = True
         return loop.run_in_executor(executor, self.process_queue)
+
+    def stop_queue(self):
+        self._queue_active = False

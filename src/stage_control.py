@@ -433,7 +433,8 @@ class StageUI(QMainWindow):
         self.stage.zero_axes()
         self.log(f'axes zeroed')
 
-    def lickspout_extend(self):
+    def lickspout_retract(self):
+        self.log('Retracting lickspout.')
         self.air_sol1.StartTask()
         self.air_sol1.WriteDigitalLines(1, 1, 10.0, PyDAQmx.DAQmx_Val_GroupByChannel, np.ones(10, dtype=np.uint8), None,
                                         None)
@@ -443,7 +444,8 @@ class StageUI(QMainWindow):
         self.air_sol1.StopTask()
         self.air_sol2.StopTask()
 
-    def lickspout_retract(self):
+    def lickspout_extend(self):
+        self.log('Extending lickspout.')
         self.air_sol1.StartTask()
         self.air_sol1.WriteDigitalLines(1, 1, 10.0, PyDAQmx.DAQmx_Val_GroupByChannel, np.zeros(10, dtype=np.uint8),
                                         None,
@@ -551,8 +553,8 @@ class StageUI(QMainWindow):
         self.ui.btn_stop.setEnabled(True)
         self.axis_timer.start(500)
         self.limit_timer.start(100)
-        self.stage.start()
-        #self.drive_to_home()
+        self.stage.start_queue()
+        self.drive_to_home()
 
     def signal_close_stage_connection(self):
         """
@@ -568,6 +570,10 @@ class StageUI(QMainWindow):
         self.ui.btn_connect.clicked.disconnect()
         self.disable_control_widgets()
         self.ui.btn_connect.clicked.connect(self.signal_connect_to_stage)
+        self.axis_timer.stop()
+        self.limit_timer.stop()
+        self.stage.stop_queue()
+        self.stage.stop_motion()
         self.stage.close()
 
     def signal_stop(self):
@@ -666,6 +672,8 @@ class StageUI(QMainWindow):
         :param event: QT event, not used.
         :return:
         """
+        self.stage.stop_queue()
+        self.stage.stop_motion()
         self.stage.close()
 
 
