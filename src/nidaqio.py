@@ -3,6 +3,7 @@ import ctypes
 import logging
 import numpy as np
 
+
 class NIDAQNotFoundError(Exception):
     ...
 
@@ -12,8 +13,8 @@ class NIDAQTask(PyDAQmx.Task):
         super().__init__()
 
 
-class NIDAQDigitalIOTask(NIDAQTask):
-    def __init__(self, device_name, channel, mode = 'di'):
+class NIDAQDigitalTask(NIDAQTask):
+    def __init__(self, device_name, channel, mode='di'):
         super().__init__()
         self.device_name = device_name
         self.channel = channel
@@ -36,6 +37,40 @@ class NIDAQDigitalIOTask(NIDAQTask):
         data = np.zeros(1000, dtype=np.uint32)
         self.task.ReadDigitalU32(-1, .1, PyDAQmx.DAQmx_Val_GroupByChannel, data, 1000, ctypes.byref(read), None)
         return data[0]
+
+    def write(self, data):
+        if self.mode != 'do':
+            raise TypeError(f'{self.fq_channel} is not configured for write.')
+        self.StartTask()
+        self.WriteDigitalLines(1, 1, len(data), PyDAQmx.DAQmx_Val_GroupByChannel, data, None, None)
+        self.StopTask()
+
+
+class NIDAQAnalogTask(NIDAQTask):
+    def __init__(self, device_name, channel, mode='ao_volt'):
+        super().__init__()
+        self.device_name = device_name
+        self.channel = channel
+        self.mode = mode
+
+        self.fq_channel = f'{device_name}/{channel}'
+        logging.info(f'Creating task: {self.sq_channel}')
+        self.task = PyDAQmx.Task()
+
+        if mode == 'ao_volt':
+            self.task.CreateAOVoltageChan(f'{self.fq_channel}'.encode(), b'', -10.0, 10.0, PyDAQmx.DAQmx_Val_Volts,
+                                          None)
+        else:
+            raise ValueError(f'Unknown mode: {mode}.  Valid modes are \'ao_volt\'.')
+
+    def write(self, data):
+        if self.mode != 'ao_volt':
+            raise TypeError(f'{self.fq_channel} is not configured for write.')
+        logging.debug(f'Writing analog voltage to {self.fq_channel}')
+        self.StartTask()
+        self.taskWriteAnalogF64(len(data), False, -1, PyDAQmx.DAQmx_Val_GroupByChannel, data, ctypes.int32(len(data)),
+                                None)
+        self.StopTask()
 
 
 class NIDAQio(object):
@@ -76,7 +111,7 @@ class NIDAQio(object):
             old_task.StopTask()
 
         task = PyDAQmx.Task()
-        task.CreateDOChan(f'/{self.device_name}/{channel}'.encode(), ''.encode(),PyDAQmx.DAQmx_Val_ChanForAllLines)
+        task.CreateDOChan(f'/{self.device_name}/{channel}'.encode(), ''.encode(), PyDAQmx.DAQmx_Val_ChanForAllLines)
         setattr(self, name, task)
 
     def create_digital_in_task(self, name, channel, overwrite=False):
