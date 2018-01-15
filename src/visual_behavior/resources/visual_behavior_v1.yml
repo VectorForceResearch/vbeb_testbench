@@ -4,45 +4,53 @@ version: 1
 # software configuration
 installation:
     root_dir: c:/ProgramData/AIBS_MPE/VisualBehavior
+    rigs:
+        test: localhost
+        D1: w7vs-syslog19
+        D2: w7vs-syslog20
+        D3: w7vs-syslog21
+        D4: w7vs-syslog22
+        D5: w7vs-syslog23
+        D6: w7vs-syslog24
 
 redis:
-    db: 0
+    db: 3
     port: 6379
-    host: localhost
+    host: aibspi
 
-
+phidget:
 # make one for each axis
 # command and control
-default_velocity_mm_per_s: 200
-default_acceleration_mm_per_s2: 2500
-default_stepsize_mm: 10
+    port: 6001
+    default_velocity_mm_per_s: 200
+    default_acceleration_mm_per_s2: 2500
+    default_stepsize_mm: 10
 
-# hardware attributes
-steps_per_revolution: 15 # reference workflow document
-distance_per_revolution_units: tbd
-backlash_correction_mm: safe_number tbd
+    # hardware attributes
+    steps_per_revolution: 15 # reference workflow document
+    distance_per_revolution_units: tbd
+    backlash_correction_mm: safe_number tbd
 
-# phidget board
-stage_serial_no: 428170
-platform_id: test
-channels:
-    x: 0
-    y: 1
-    z: 2
+    step_size: 200
+    # phidget board
+    platform_id: test
+    channels:
+        x: 0
+        y: 1
+        z: 2
 
-# nidaq  # resolves to /dev9/port0/line5 for example
-device_name: 'Dev9'
-port: 0
-lines:
-    x: 5
-    y: 3
-    z: 1
+nidaq: # lines resolve to /dev9/port0/line5 for example
 
-threshold_low: 0  # low means limit switch hit
-threshold_high: 8 # high means movable
+    # digital in
+    limit_switch_x: port0/line5
+    limit_switch_y: port0/line3
+    limit_switch_z: port0/line1
 
-analog_0: ao0
-analog_1: ao1
-sol_1: port1/line3
-sol_2: port2/line0
+    # digital out
+    air_solenoid_1: port1/line3
+    air_solenoid_2: port2/line0
+
+    # analog out
+    clamp_0: ao0
+    clamp_1: ao1
 ...

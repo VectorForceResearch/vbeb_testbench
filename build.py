@@ -31,7 +31,7 @@ else:
 
 # project meta
 name = 'visual_behavior'
-version = '0.1.1'
+version = '0.2.1'
 summary = 'Prototype UI / Stage Hardware api'
 description = __doc__
 authors = (Author('Ross Hytnen', 'rossh@alleninstitute.org'),)
@@ -107,7 +107,8 @@ def initialize(project):
     # entry points (typically the .py files in visual_behavior
     project.set_property('distutils_entry_points',
                          {'console_scripts': [
-                             'stage_controller=stage_control:main']})
+                             'stage_controller=remote_stage_ui:main',
+                             'phidget_ro=phidget_ro:main']})
 
     resource_patterns = ['yaml', 'yml', 'png', 'jpeg', 'jpeg', 'ui', 'json', 'ico']
     for directory, subdirectory, files in os.walk('src/visual_behavior'):

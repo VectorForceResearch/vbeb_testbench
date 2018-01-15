@@ -22,6 +22,15 @@ class Stage(object):
         :return:
         """
 
+    @serial.setter
+    @abstractmethod
+    def serial(self, value):
+        """
+
+        :param value:
+        :return:
+        """
+
     @abstractmethod
     def move_to(self, coordinates):
         """
@@ -131,7 +140,6 @@ class PhidgetStage(Stage):
         self._initialized = [False] * 3
         self._position_changed_callback = None
         self._queue_active = False
-        async_loop = asyncio.get_event_loop()
         self._queue = Queue()
 
 
@@ -142,6 +150,14 @@ class PhidgetStage(Stage):
         :return: serial number defined in __init__( ... )
         """
         return self._serial
+
+    @serial.setter
+    def serial(self, value):
+        """
+        Serial number associated with phidget board
+        :return: serial number defined in __init__( ... )
+        """
+        self._serial=value
 
     @property
     def min_velocity(self, axis=None):
@@ -224,9 +240,10 @@ class PhidgetStage(Stage):
         :param axis:
         :return:
         """
+        print(f'initializing axis {axis}')
         index = axis
         axis = self._axes[index]
-        axis.setDeviceSerialNumber(self._serial)
+        #axis.setDeviceSerialNumber(self._serial)
         axis.setChannel(self._channels[index])
         axis.setOnAttachHandler(self._phidget_stepper_attached)
         axis.setOnDetachHandler(self._phidget_stepper_detached)
@@ -238,6 +255,7 @@ class PhidgetStage(Stage):
         except PhidgetException as e:
             self._phidget_error_event(e)
             raise InitializationError
+
 
         axis.setVelocityLimit(200.0)
         axis.setAcceleration(2500.0)
@@ -273,11 +291,16 @@ class PhidgetStage(Stage):
         if not isinstance(coordinates, (list, tuple)) or len(coordinates) != len(self._axes):
             logging.error(f'Expected coordinates to be list-like of length {len(self._axes)}')
             raise InvalidCoordinatesError
+       # ax = [self._axes[0], self._axes[2]]
         try:
             for index, axis in enumerate(self._axes):
-                axis.setEngaged(1)
+                print(f'Axis {index}')
+                axis.setEngaged(True)
+                print(f'Engaged')
                 axis.setTargetPosition(coordinates[index])
+
         except PhidgetException as e:
+            print('dafuq')
             logging.error(e)
 
     def append_move(self, coordinates):
@@ -286,7 +309,6 @@ class PhidgetStage(Stage):
         :param coordinates:
         :return:
         """
-
         if not isinstance(coordinates, (list, tuple)) or len(coordinates) != len(self._axes):
             logging.error(f'Expected coordinates to be list-like of length {len(self._axes)}')
             raise InvalidCoordinatesError

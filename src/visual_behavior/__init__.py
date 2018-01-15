@@ -11,7 +11,7 @@ import yaml
 
 __author__ = """Ross Hytnen"""
 __email__ = 'rossh@alleninstitute.org'
-__version__ = '0.1.1'
+__version__ = '0.2.1'
 
 if sys.version_info.major == 2:
     class FileNotFoundError(Exception):
@@ -38,7 +38,7 @@ def init_log(log_config_file=None, override_local=False):
     config = source_project_configuration(log_config_file, override_local=override_local, as_dict=True)
     if config is None:
         logging.basicConfig(level=logging.DEBUG)
-        logging.warning('could not find {}.  Using default configuration.'.format(log_config_file))
+        logging.info('could not find {}.  Using default configuration.'.format(log_config_file))
         return
 
     config['handlers']['file_handler']['filename'] = sys.argv[0] + '.log'
@@ -56,7 +56,7 @@ def parse_config(configuration_file):
         with open(configuration_file) as f:
             return yaml.safe_load(f)
     except FileNotFoundError as err:
-        logging.warning('configuration not found: {}: {}'.format(configuration_file, err))
+        logging.info('configuration not found: {}: {}'.format(configuration_file, err))
         return None
 
 

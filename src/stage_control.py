@@ -126,7 +126,7 @@ class StageUI(QMainWindow):
         for axis, line_name in self.config.lines._asdict().items():
             task = Task()
             channel = f'/{self.config.device_name}/port{self.config.port}/line{line_name}'.encode()
-        task.CreateDIChan(channel, b'', PyDAQmx.DAQmx_Val_ChanPerLine)
+            task.CreateDIChan(channel, b'', PyDAQmx.DAQmx_Val_ChanPerLine)
             self.nidaq_dis[axis] = task
 
         self.air_sol1 = Task()
