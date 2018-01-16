@@ -75,6 +75,9 @@ class RemoteStageController(object):
     def daq(self):
         return self._daq
 
+    def stop_motion(self):
+        self._stage.stop_motion()
+
     def extend_lickspout(self):
         logging.info('extending lickspout')
         self._daq.air_sol_1.write(self, np.ones(10, dtype=np.uint8))

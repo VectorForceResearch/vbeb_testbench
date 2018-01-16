@@ -50,10 +50,10 @@ class StageUI(QMainWindow):
         self.table_timer = QTimer()
         self.table_timer.timeout.connect(self.update_table)
 
-        self.coordinates = {'home': [0, 0, 0],
-                            'working': [0, 0, 0],
-                            'load': [0, 0, 0],
-                            'mouse': [0, 0, 0]}
+        self.coordinates = {'home': None,
+                            'working': None,
+                            'load': None,
+                            'mouse': None}
 
         self.db = self.setup_db()
 
@@ -117,13 +117,26 @@ class StageUI(QMainWindow):
         self.ui.btn_extend.clicked.connect(self.signal_extend_lickspout)
         self.ui.btn_retract.clicked.connect(self.signal_retract_lickspout)
         self.ui.btn_home.clicked.connect(self.signal_home_stage)
+        self.ui.btn_adm_home.clicked.connect(self.signal_home_stage)
         self.ui.btn_z_plus.clicked.connect(partial(self.axis_step, 2, 1))
         self.ui.btn_z_minus.clicked.connect(partial(self.axis_step, 2,  -1))
         self.ui.btn_y_plus.clicked.connect(partial(self.axis_step, 1,  1))
         self.ui.btn_y_minus.clicked.connect(partial(self.axis_step, 1, -1))
         self.ui.btn_x_plus.clicked.connect(partial(self.axis_step, 0, 1))
         self.ui.btn_x_minus.clicked.connect(partial(self.axis_step, 0, -1))
-        #self.ui.btn_stop.clicked.connect(self.signal_stop)
+        self.ui.btn_stop.clicked.connect(self.signal_stop)
+
+        self.ui.btn_register_working.clicked.connect(partial(self.register_coordinates, 'WORKING'))
+        self.ui.btn_register_load.clicked.connect(partial(self.register_coordinates, 'LOAD'))
+        self.ui.btn_register_mouse.clicked.connect(partial(self.register_coordinates, 'MOUSE'))
+        self.ui.le_mouse_id.editingFinished.connect(self.load_mouse_coordinates)
+
+        self.ui.btn_working.clicked.connect(partial(self.move_to_coordinates, 'WORKING'))
+        self.ui.btn_load.clicked.connect(partial(self.move_to_coordinates, 'LOAD'))
+        self.ui.btn_mouse.clicked.connect(partial(self.move_to_coordinates, 'MOUSE'))
+        self.ui.btn_adm_working.clicked.connect(partial(self.move_to_coordinates, 'WORKING'))
+        self.ui.btn_adm_load.clicked.connect(partial(self.move_to_coordinates, 'LOAD'))
+        self.ui.btn_adm_mouse.clicked.connect(partial(self.move_to_coordinates, 'MOUSE'))
 
         self.icon_clear = QIcon(self.module_path[0] + '/resources/led_clear.png')
         self.icon_red = QIcon(self.module_path[0] + '/resources/led_red.png')
@@ -189,20 +202,35 @@ class StageUI(QMainWindow):
         position[axis] += step * sign
         self.stage.append_move(position)
 
-    def register_coordinates(self, name, label):
+    def register_coordinates(self, name):
         """
 
         :param name:
         :param label:
         :return:
         """
-        key = f'{self.stage.serial}_{self.ui.le_platform_id.text()}_{name}'
-        coords = list(self.stage.position)
-        self.db[key] = yaml.dump(coords)
-        label.setText(str(coords))
+        try:
+            key = f'{self.stage.serial}_{name}'
+            coords = list(self.stage.position)
+            self.coordinates[name] = coords
+            self.db[key] = yaml.dump(coords)
+        except Exception as err:
+            self.log(f'Error recording {name} coordinates to the db')
+            self.log(f'{err}')
 
-    def move_to_coordinates(self, name, label):
-        ...
+    def move_to_coordinates(self, name):
+        if not self.coordinates['home']:
+            self.log('Error: Stage has not been homed.')
+            return
+        coords = self.coordinates[name]
+        try:
+            if coords:
+                self.stage.move_to(coords)
+        except KeyError as err:
+            self.log(f'Error: {key} has not been registered.')
+
+    def signal_stop(self):
+        self.how_proxy.stop_motion()
 
     def signal_home_stage(self):
         self.hw_proxy.home_stage()

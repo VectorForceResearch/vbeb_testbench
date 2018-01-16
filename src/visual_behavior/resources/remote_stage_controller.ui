@@ -37,15 +37,15 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="page_user">
        <property name="geometry">
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>100</width>
-         <height>30</height>
+         <width>589</width>
+         <height>431</height>
         </rect>
        </property>
        <attribute name="label">
@@ -731,7 +731,7 @@
          <string>Connected To:</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="btn_mouse_2">
+       <widget class="QPushButton" name="btn_adm_mouse">
         <property name="enabled">
          <bool>true</bool>
         </property>
@@ -752,7 +752,7 @@
          <string>Mouse</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="btn_home_2">
+       <widget class="QPushButton" name="btn_adm_home">
         <property name="enabled">
          <bool>true</bool>
         </property>
@@ -773,7 +773,7 @@
          <string>Home</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="btn_load_2">
+       <widget class="QPushButton" name="btn_adm_load">
         <property name="enabled">
          <bool>true</bool>
         </property>
@@ -794,7 +794,7 @@
          <string>Load / Unload</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="btn_working_2">
+       <widget class="QPushButton" name="btn_adm_working">
         <property name="enabled">
          <bool>true</bool>
         </property>
@@ -815,28 +815,7 @@
          <string>Working</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="btn_home_3">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="geometry">
-         <rect>
-          <x>170</x>
-          <y>220</y>
-          <width>150</width>
-          <height>35</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>14</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Home</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="btn_load_3">
+       <widget class="QPushButton" name="btn_register_load">
         <property name="enabled">
          <bool>true</bool>
         </property>
@@ -857,7 +836,7 @@
          <string>Load / Unload</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="btn_mouse_3">
+       <widget class="QPushButton" name="btn_register_mouse">
         <property name="enabled">
          <bool>true</bool>
         </property>
@@ -878,7 +857,7 @@
          <string>Mouse</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="btn_working_3">
+       <widget class="QPushButton" name="btn_register_working">
         <property name="enabled">
          <bool>true</bool>
         </property>
