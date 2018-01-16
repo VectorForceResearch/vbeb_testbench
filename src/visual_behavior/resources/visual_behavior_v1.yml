@@ -6,12 +6,12 @@ installation:
     root_dir: c:/ProgramData/AIBS_MPE/VisualBehavior
     rigs:
         test: localhost
-        D1: w7vs-syslog19
-        D2: w7vs-syslog20
-        D3: w7vs-syslog21
-        D4: w7vs-syslog22
-        D5: w7vs-syslog23
-        D6: w7vs-syslog24
+        D1: w7vs-syslogic19
+        D2: w7vs-syslogic20
+        D3: w7vs-syslogic21
+        D4: w7vs-syslogic22
+        D5: w7vs-syslogic23
+        D6: w7vs-syslogic24
 
 redis:
     db: 3

@@ -4,6 +4,8 @@ import logging
 import argparse
 import asyncio
 import numpy as np
+import threading
+import time
 
 class RemoteStageController(object):
     def __init__(self):
@@ -66,14 +68,20 @@ class RemoteStageController(object):
 
 
     @property
+    def limits(self):
+        return self._limit_tripped
+
+    @property
     def daq(self):
         return self._daq
 
     def extend_lickspout(self):
+        logging.info('extending lickspout')
         self._daq.air_sol_1.write(self, np.ones(10, dtype=np.uint8))
         self._daq.air_sol_2.write(self, np.zeros(10, dtype=np.uint8))
 
     def retract_lickspout(self):
+        logging.info('retracting lickspout')
         self._daq.air_sol_2.write(self, np.ones(10, dtype=np.uint8))
         self._daq.air_sol_1.write(self, np.zeros(10, dtype=np.uint8))
 
@@ -106,9 +114,14 @@ class RemoteStageController(object):
         Async stuff
         :return:
         """
-        self._stage.start_queue()
+        self.monitor_thread = threading.Thread(target=self.monitor_limits)
+        self.stage_thread = threading.Thread(target=self._stage.process_queue)
+
         self._monitor_limits = True
-        self.async_loop.run_in_executor(executor, self.monitor_limits)
+        self.monitor_thread.start()
+        self._stage._queue_active = True
+        self.stage_thread.start()
+
 
     def monitor_limits(self):
         """
@@ -121,24 +134,25 @@ class RemoteStageController(object):
                 value = task.read()
                 if not value and not self._limit_tripped[axis]:
                     logging.info(f'axis {axis} is at the limit switch')
-                    self._stage._axes[axis].setEngaged = False
+                    self._stage._axes[axis].setEngaged(False)
                     self._limit_tripped[axis] = True
-                    self.async_loop.run_in_executor(None, self.move_off_limit, axis, 5)
-                    #self.move_off_limit(axis, 5)
+                    #self.async_loop.run_in_executor(None, self.move_off_limit, axis, 5)
+                    t = threading.Thread(target = self.move_off_limit, args = (axis, 5))
+                    t.start()
+
+        time.sleep(.1)
 
     def move_off_limit(self, axis, step_size):
         logging.info(f'attempting to move axis {axis} off limit switch')
         self._daq.clamp_0.write(self.clamp_table[axis][0])
         self._daq.clamp_1.write(self.clamp_table[axis][1])
+        self._stage._axes[axis].setEngaged(0)
         while not self._limits[axis].read():
             if self._stage._axes[axis].getIsMoving():
-                print('sleep')
-                asyncio.sleep(.1)
-                print('wake')
+                time.sleep(.1)
             position = self._stage.position
             position[axis] += (step_size * self._limit_direction[axis] * -1)
-            self._stage.append_move(position)
-
+            self._stage.move_to(position)
         self._daq.clamp_0.write(self.clamp_table['reset'][0])
         self._daq.clamp_1.write(self.clamp_table['reset'][1])
         self._limit_tripped[axis] = False
@@ -149,8 +163,8 @@ class RemoteStageController(object):
                 self._homing_mode = False
                 self.zero_stage()
                 logging.info('staged homed')
-        else:
-            self.drive_axis_home(axis)
+            else:
+                self.drive_axis_home(axis)
 
     def drive_axis_home(self, axis):
         logging.info(f'driving axis {axis} to home')
@@ -183,8 +197,6 @@ def main():
     host.add_service(RemoteObjectService, service_host=('*', port))
     remote.start_hardware()
     host.start()
-    while True:
-        ...
 
 if __name__ == '__main__':
     main()

@@ -294,9 +294,7 @@ class PhidgetStage(Stage):
        # ax = [self._axes[0], self._axes[2]]
         try:
             for index, axis in enumerate(self._axes):
-                print(f'Axis {index}')
                 axis.setEngaged(True)
-                print(f'Engaged')
                 axis.setTargetPosition(coordinates[index])
 
         except PhidgetException as e:

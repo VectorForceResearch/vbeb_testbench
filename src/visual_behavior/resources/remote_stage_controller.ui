@@ -37,15 +37,15 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="page_user">
        <property name="geometry">
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>589</width>
-         <height>431</height>
+         <width>100</width>
+         <height>30</height>
         </rect>
        </property>
        <attribute name="label">
@@ -577,39 +577,6 @@
          <string>Mouse ID:</string>
         </property>
        </widget>
-       <zorder>btn_y_plus</zorder>
-       <zorder>btn_x_minus</zorder>
-       <zorder>btn_y_minus</zorder>
-       <zorder>pushButton</zorder>
-       <zorder>btn_x_plus</zorder>
-       <zorder>btn_z_plus</zorder>
-       <zorder>btn_z_minus</zorder>
-       <zorder>cb_rigs</zorder>
-       <zorder>label</zorder>
-       <zorder>btn_load</zorder>
-       <zorder>btn_mouse</zorder>
-       <zorder>btn_home</zorder>
-       <zorder>btn_working</zorder>
-       <zorder>btn_retract</zorder>
-       <zorder>btn_extend</zorder>
-       <zorder>btn_y_plus</zorder>
-       <zorder>pushButton</zorder>
-       <zorder>btn_z_minus</zorder>
-       <zorder>btn_x_plus</zorder>
-       <zorder>btn_x_minus</zorder>
-       <zorder>btn_y_minus</zorder>
-       <zorder>btn_z_plus</zorder>
-       <zorder>pushButton_2</zorder>
-       <zorder>line</zorder>
-       <zorder>line_2</zorder>
-       <zorder>line_3</zorder>
-       <zorder>line_4</zorder>
-       <zorder>label_5</zorder>
-       <zorder>btn_emergency</zorder>
-       <zorder>btn_stop</zorder>
-       <zorder>line_5</zorder>
-       <zorder>le_mouse_id</zorder>
-       <zorder>label_6</zorder>
       </widget>
       <widget class="QWidget" name="page_admin">
        <property name="enabled">
@@ -660,7 +627,7 @@
          </rect>
         </property>
         <attribute name="horizontalHeaderDefaultSectionSize">
-         <number>90</number>
+         <number>85</number>
         </attribute>
         <row>
          <property name="text">
@@ -700,6 +667,11 @@
         <column>
          <property name="text">
           <string>Engaged</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Limit</string>
          </property>
         </column>
         <item row="0" column="1">
@@ -961,6 +933,85 @@
         </property>
         <property name="text">
          <string>Go To:</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="le_x">
+        <property name="geometry">
+         <rect>
+          <x>330</x>
+          <y>220</y>
+          <width>30</width>
+          <height>35</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="le_y">
+        <property name="geometry">
+         <rect>
+          <x>370</x>
+          <y>220</y>
+          <width>30</width>
+          <height>35</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="le_z">
+        <property name="geometry">
+         <rect>
+          <x>410</x>
+          <y>220</y>
+          <width>30</width>
+          <height>35</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="btn_moveto">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>450</x>
+          <y>220</y>
+          <width>101</width>
+          <height>35</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Move To</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="le_step_size">
+        <property name="geometry">
+         <rect>
+          <x>410</x>
+          <y>260</y>
+          <width>50</width>
+          <height>35</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_7">
+        <property name="geometry">
+         <rect>
+          <x>330</x>
+          <y>260</y>
+          <width>71</width>
+          <height>35</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Step Size</string>
         </property>
        </widget>
       </widget>

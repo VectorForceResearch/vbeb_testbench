@@ -3,30 +3,20 @@
 
 # TODO:  Mouse ID
 
-import datetime
 import logging
 import socket
-import time
 from functools import partial
 from itertools import product
-import sys
-import PyDAQmx
-import numpy as np
 import redis
 import visual_behavior
 import yaml
-from Phidget22.Net import PhidgetException
+import sys
 from PyDAQmx import *
 from qtmodern import styles, windows
 from qtpy import uic, QtCore
 from qtpy.QtCore import QTimer
 from qtpy.QtGui import QIcon, QPixmap
 from qtpy.QtWidgets import *
-from visual_behavior import InitializationError
-from visual_behavior import PhidgetStage
-from ctypes import byref
-from threading import Lock
-import asyncio
 import hashlib
 from aibsmw import ZROProxy
 
@@ -36,6 +26,7 @@ class StageUI(QMainWindow):
     col_position = 2
     col_moving = 3
     col_engaged = 4
+    col_limit = 5
 
     def __init__(self):
         """
@@ -55,7 +46,7 @@ class StageUI(QMainWindow):
         self.setCentralWidget(self.ui)
 
         self.setup_ui()
-        self.ui.statusBar.showMessage('Stage Controller Ready')
+        self.log('Stage Controller Ready')
         self.table_timer = QTimer()
         self.table_timer.timeout.connect(self.update_table)
 
@@ -66,14 +57,18 @@ class StageUI(QMainWindow):
 
         self.db = self.setup_db()
 
+    def log(self, message):
+        logging.info(message)
+        self.ui.statusBar.showMessage(message)
+
     def setup_db(self):
         db = redis.StrictRedis(host=self.config.redis.host, db=self.config.redis.db, port=self.config.redis.port)
         db_string = f'{self.config.redis.host}:{self.config.redis.port} ({self.config.redis.db})'
         try:
             db.info()
-            self.ui.statusBar.showMessage(f'Connected to database: {db_string}')
+            self.log(f'Connected to database: {db_string}')
         except ConnectionRefusedError as err:
-            self.ui.statusBar.showMessage(f'Failed to connected to database: {db_string}: {err}')
+            self.log(f'Failed to connected to database: {db_string}: {err}')
 
         return db
 
@@ -104,9 +99,9 @@ class StageUI(QMainWindow):
         key = f'{self.stage.serial}_{self.ui.le_mouse_id}'
         if self.db.exists(key):
             self.coordinates['mouse'] = yaml.load(self.db[key])
-            self.ui.statusBar.showMessage(f'loaded mouse offset: ({coords[0]}, {coords[1]}, {coords[2]})')
+            self.log(f'loaded mouse offset: ({coords[0]}, {coords[1]}, {coords[2]})')
         else:
-            self.ui.statusBar.showMessage(f'Could not find mouse offset: {key}')
+            self.log(f'Could not find mouse offset: {key}')
 
     def setup_ui(self):
         """
@@ -118,7 +113,7 @@ class StageUI(QMainWindow):
         for alias, host in rigs.items():
             self.ui.cb_rigs.addItem(f'{alias}: {host}')
         self.ui.cb_rigs.currentIndexChanged.connect(self.signal_connect_to_rig)
-
+        self.ui.btn_moveto.clicked.connect(self.signal_move_to)
         self.ui.btn_extend.clicked.connect(self.signal_extend_lickspout)
         self.ui.btn_retract.clicked.connect(self.signal_retract_lickspout)
         self.ui.btn_home.clicked.connect(self.signal_home_stage)
@@ -140,7 +135,7 @@ class StageUI(QMainWindow):
             item.setTextAlignment(QtCore.Qt.AlignCenter)
             self.ui.tbl_stage.setItem(r, c, item)
 
-        for c, r in product([self.col_connected, self.col_moving, self.col_engaged], range(3)):
+        for c, r in product([self.col_connected, self.col_moving, self.col_engaged, self.col_limit], range(3)):
             button = QPushButton()
             button.setFlat(True)
             button.setIcon(self.icon_clear)
@@ -156,6 +151,9 @@ class StageUI(QMainWindow):
     def update_table(self):
         moving = self.stage.is_moving
         engaged = self.stage.is_engaged
+        limits = self.stage.limits
+        position = self.stage.position
+
         for i in range(3):
             if moving[i]:
                 self.ui.tbl_stage.cellWidget(i, self.col_moving).setIcon(self.icon_blue)
@@ -165,6 +163,11 @@ class StageUI(QMainWindow):
                 self.ui.tbl_stage.cellWidget(i, self.col_engaged).setIcon(self.icon_blue)
             else:
                 self.ui.tbl_stage.cellWidget(i, self.col_engaged).setIcon(self.icon_clear)
+            if limits[i]:
+                self.ui.tbl_stage.cellWidget(i, self.col_limit).setIcon(self.icon_red)
+            else:
+                self.ui.tbl_stage.cellWidget(i, self.col_limit).setIcon(self.icon_blue)
+            self.ui.tbl_stage.item(i, self.col_position).setText(str(position[i]))
 
     def axis_step(self, axis, sign=1):
         """
@@ -178,8 +181,11 @@ class StageUI(QMainWindow):
         if not self.stage:
             return
 
+        if self.ui.le_step_size.text() != '':
+            step = self.ui.le_step_size.text()
+        else:
+            step = self.config.phidget.step_size
         position = self.stage.position
-        step = self.config.phidget.step_size
         position[axis] += step * sign
         self.stage.append_move(position)
 
@@ -207,6 +213,16 @@ class StageUI(QMainWindow):
     def signal_extend_lickspout(self):
         self.hw_proxy.extend_lickspout()
 
+    def signal_move_to(self):
+        try:
+            x = float(self.ui.le_x.text())
+            y = float(self.ui.le_y.text())
+            z = float(self.ui.le_z.text())
+            self.stage.append_move([x, y, z])
+        except Exception as err:
+            print('error:', err)
+            pass
+
     def signal_connect_to_rig(self, i):
         text = self.ui.cb_rigs.currentText()
         if text == 'None':
@@ -215,16 +231,25 @@ class StageUI(QMainWindow):
             self.stage = None
             self.daq = None
             self.disable_user_controls()
+            for i in range(3):
+                self.ui.tbl_stage.cellWidget(i, self.col_connected).setIcon(self.icon_clear)
+                self.ui.tbl_stage.cellWidget(i, self.col_engaged).setIcon(self.icon_clear)
+                self.ui.tbl_stage.cellWidget(i, self.col_limit).setIcon(self.icon_clear)
+                self.ui.tbl_stage.cellWidget(i, self.col_moving).setIcon(self.icon_clear)
+                self.ui.tbl_stage.item(i, self.col_position).setText('')
+                self.ui.tbl_stage.item(i, self.col_port).setText('')
             return
 
         host = self.ui.cb_rigs.currentText().split(':')[1].strip()
-        self.ui.statusBar.showMessage(f'Connecting to {host}')
-        self.hw_proxy = ZROProxy()
+        self.log(f'Connecting to {host}')
+        self.hw_proxy = ZROProxy(host=(host, 6001))
         self.stage = self.hw_proxy
         #self.daq = self.hw_proxy.daq
         self.load_stage_coordinates()
-        self.ui.statusBar.showMessage(f'Connected to stage: {self.hw_proxy.stage_serial}')
+        self.log(f'Connected to stage: {self.hw_proxy.stage_serial}')
         self.enable_user_controls()
+        for i in range(3):
+            self.ui.tbl_stage.cellWidget(i, self.col_connected).setIcon(self.icon_blue)
         self.table_timer.start(500)
 
     def disable_user_controls(self):
