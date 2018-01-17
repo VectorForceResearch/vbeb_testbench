@@ -44,6 +44,21 @@ class RemoteStageController(object):
                             'reset': [np.zeros(1000), np.zeros(1000)]}
 
         self.limit_lock = threading.Lock()
+        self._ignore_limits = False
+
+    @property
+    def ignore_limits(self):
+        return self._ignore_limits
+
+    @ignore_limits.setter
+    def ignore_limits(self, value):
+        if value:
+            self._ignore_limits = True
+            logging.info('Ignoring limit switch values.')
+        else:
+            self._ignore_limits = False
+            logging.info('Respecting limit switch values.')
+
     @property
     def phidget_stage(self):
         return self._stage
@@ -75,6 +90,10 @@ class RemoteStageController(object):
     @property
     def daq(self):
         return self._daq
+
+    def clamp_signal(self, axis):
+        self._daq.clamp_0.write(self.clamp_table[axis][0])
+        self._daq.clamp_1.write(self.clamp_table[axis][1])
 
     def stop_motion(self):
         self._stage.stop_motion()
@@ -137,6 +156,9 @@ class RemoteStageController(object):
         """
 
         while self._monitor_limits:
+            if not self._ignore_limits:
+                continue
+
             for axis, task in self._limits.items():
                 if not task.read() and not self._limit_tripped[axis]:
                     logging.info(f'axis {axis} is at the limit switch')
@@ -153,16 +175,21 @@ class RemoteStageController(object):
         self._daq.clamp_0.write(self.clamp_table[axis][0])
         self._daq.clamp_1.write(self.clamp_table[axis][1])
         self._stage._axes[axis].setEngaged(0)
+        attempts = 0
         while not self._limits[axis].read():
             if self._stage._axes[axis].getIsMoving():
                 time.sleep(.1)
             position = self._stage.position
             position[axis] += (step_size * self._limit_direction[axis] * -1)
             self._stage.move_to(position)
-
+            attempts += 1
+            if attempts >= 10:
+                logging.warning('Failed to move axis {} off limit in 10 tries.  Ignoring.')
+                break
         self._daq.clamp_0.write(self.clamp_table['reset'][0])
         self._daq.clamp_1.write(self.clamp_table['reset'][1])
-        self._limit_tripped[axis] = False
+        if attempts < 10:
+            self._limit_tripped[axis] = False
         self.limit_lock.release()
         if self._homing_mode:
             axis += 1

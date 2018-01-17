@@ -515,27 +515,6 @@
          <string>Emergency Out</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="btn_stop">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="geometry">
-         <rect>
-          <x>410</x>
-          <y>280</y>
-          <width>150</width>
-          <height>35</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>14</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Stop</string>
-        </property>
-       </widget>
        <widget class="Line" name="line_5">
         <property name="geometry">
          <rect>
@@ -575,6 +554,24 @@
         </property>
         <property name="text">
          <string>Mouse ID:</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="lbl_status">
+        <property name="geometry">
+         <rect>
+          <x>410</x>
+          <y>280</y>
+          <width>151</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Status: </string>
         </property>
        </widget>
       </widget>
@@ -739,7 +736,7 @@
          <rect>
           <x>0</x>
           <y>340</y>
-          <width>150</width>
+          <width>100</width>
           <height>35</height>
          </rect>
         </property>
@@ -760,7 +757,7 @@
          <rect>
           <x>0</x>
           <y>220</y>
-          <width>150</width>
+          <width>100</width>
           <height>35</height>
          </rect>
         </property>
@@ -781,7 +778,7 @@
          <rect>
           <x>0</x>
           <y>300</y>
-          <width>150</width>
+          <width>100</width>
           <height>35</height>
          </rect>
         </property>
@@ -791,7 +788,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Load / Unload</string>
+         <string>Load</string>
         </property>
        </widget>
        <widget class="QPushButton" name="btn_adm_working">
@@ -802,7 +799,7 @@
          <rect>
           <x>0</x>
           <y>260</y>
-          <width>150</width>
+          <width>100</width>
           <height>35</height>
          </rect>
         </property>
@@ -821,9 +818,9 @@
         </property>
         <property name="geometry">
          <rect>
-          <x>170</x>
+          <x>120</x>
           <y>300</y>
-          <width>150</width>
+          <width>100</width>
           <height>35</height>
          </rect>
         </property>
@@ -833,7 +830,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Load / Unload</string>
+         <string>Load</string>
         </property>
        </widget>
        <widget class="QPushButton" name="btn_register_mouse">
@@ -842,9 +839,9 @@
         </property>
         <property name="geometry">
          <rect>
-          <x>170</x>
+          <x>120</x>
           <y>340</y>
-          <width>150</width>
+          <width>100</width>
           <height>35</height>
          </rect>
         </property>
@@ -863,9 +860,9 @@
         </property>
         <property name="geometry">
          <rect>
-          <x>170</x>
+          <x>120</x>
           <y>260</y>
-          <width>150</width>
+          <width>100</width>
           <height>35</height>
          </rect>
         </property>
@@ -881,7 +878,7 @@
        <widget class="QLabel" name="label_3">
         <property name="geometry">
          <rect>
-          <x>170</x>
+          <x>120</x>
           <y>190</y>
           <width>111</width>
           <height>35</height>
@@ -917,31 +914,40 @@
        <widget class="QLineEdit" name="le_x">
         <property name="geometry">
          <rect>
-          <x>330</x>
-          <y>220</y>
-          <width>30</width>
+          <x>520</x>
+          <y>230</y>
+          <width>41</width>
           <height>35</height>
          </rect>
+        </property>
+        <property name="text">
+         <string>0</string>
         </property>
        </widget>
        <widget class="QLineEdit" name="le_y">
         <property name="geometry">
          <rect>
-          <x>370</x>
-          <y>220</y>
-          <width>30</width>
+          <x>520</x>
+          <y>270</y>
+          <width>41</width>
           <height>35</height>
          </rect>
+        </property>
+        <property name="text">
+         <string>0</string>
         </property>
        </widget>
        <widget class="QLineEdit" name="le_z">
         <property name="geometry">
          <rect>
-          <x>410</x>
-          <y>220</y>
-          <width>30</width>
+          <x>520</x>
+          <y>310</y>
+          <width>41</width>
           <height>35</height>
          </rect>
+        </property>
+        <property name="text">
+         <string>0</string>
         </property>
        </widget>
        <widget class="QPushButton" name="btn_moveto">
@@ -950,9 +956,9 @@
         </property>
         <property name="geometry">
          <rect>
-          <x>450</x>
-          <y>220</y>
-          <width>101</width>
+          <x>410</x>
+          <y>230</y>
+          <width>100</width>
           <height>35</height>
          </rect>
         </property>
@@ -968,9 +974,9 @@
        <widget class="QLineEdit" name="le_step_size">
         <property name="geometry">
          <rect>
-          <x>410</x>
-          <y>260</y>
-          <width>50</width>
+          <x>519</x>
+          <y>350</y>
+          <width>41</width>
           <height>35</height>
          </rect>
         </property>
@@ -978,8 +984,8 @@
        <widget class="QLabel" name="label_7">
         <property name="geometry">
          <rect>
-          <x>330</x>
-          <y>260</y>
+          <x>440</x>
+          <y>350</y>
           <width>71</width>
           <height>35</height>
          </rect>
@@ -991,6 +997,113 @@
         </property>
         <property name="text">
          <string>Step Size</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="btn_stop">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>409</x>
+          <y>270</y>
+          <width>100</width>
+          <height>35</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Stop</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="rb_reset">
+        <property name="geometry">
+         <rect>
+          <x>240</x>
+          <y>230</y>
+          <width>100</width>
+          <height>35</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Reset </string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="rb_x">
+        <property name="geometry">
+         <rect>
+          <x>240</x>
+          <y>270</y>
+          <width>100</width>
+          <height>35</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>x Release</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="rb_z">
+        <property name="geometry">
+         <rect>
+          <x>240</x>
+          <y>350</y>
+          <width>100</width>
+          <height>35</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Z Release</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="rb_y">
+        <property name="geometry">
+         <rect>
+          <x>240</x>
+          <y>310</y>
+          <width>100</width>
+          <height>35</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>y Release</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_8">
+        <property name="geometry">
+         <rect>
+          <x>240</x>
+          <y>190</y>
+          <width>111</width>
+          <height>35</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Clamp Controls</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="cb_limits">
+        <property name="geometry">
+         <rect>
+          <x>409</x>
+          <y>190</y>
+          <width>121</width>
+          <height>35</height>
+         </rect>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::RightToLeft</enum>
+        </property>
+        <property name="text">
+         <string>Ignore Limits</string>
         </property>
        </widget>
       </widget>

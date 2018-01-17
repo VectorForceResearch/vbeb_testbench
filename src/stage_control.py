@@ -117,7 +117,7 @@ class StageUI(QMainWindow):
         self.limit_timer = QTimer()
         # noinspection PyUnresolvedReferences
         self.limit_timer.timeout.connect(self.limit_timeout)
-
+        self._ignore_limits = False
         """
         Corresponds to the inputs to receive from NIDAQ to check if a limit switch has been tripped.
         The intent is to call a stop on the moving axis.
@@ -330,6 +330,10 @@ class StageUI(QMainWindow):
 
         self.ui.le_serial.setText(str(self.config.stage_serial_no))
         self.ui.le_platform_id.setText(self.config.platform_id)
+
+    @property
+    def ignore_limits(self):
+        return self._ignore_limits
 
     def go_to_coordinates(self, name):
         """
