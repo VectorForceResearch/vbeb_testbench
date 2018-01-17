@@ -43,6 +43,7 @@ class RemoteStageController(object):
                             0: [np.ones(1000) * 5, np.ones(1000) * 5],
                             'reset': [np.zeros(1000), np.zeros(1000)]}
 
+        self.limit_lock = threading.Lock()
     @property
     def phidget_stage(self):
         return self._stage
@@ -80,13 +81,15 @@ class RemoteStageController(object):
 
     def extend_lickspout(self):
         logging.info('extending lickspout')
-        self._daq.air_sol_1.write(self, np.ones(10, dtype=np.uint8))
-        self._daq.air_sol_2.write(self, np.zeros(10, dtype=np.uint8))
+        self._daq.air_sol_1.write(np.ones(10, dtype=np.uint8))
+        self._daq.air_sol_2.write(np.zeros(10, dtype=np.uint8))
+
 
     def retract_lickspout(self):
         logging.info('retracting lickspout')
-        self._daq.air_sol_2.write(self, np.ones(10, dtype=np.uint8))
-        self._daq.air_sol_1.write(self, np.zeros(10, dtype=np.uint8))
+        self._daq.air_sol_1.write(np.zeros(10, dtype=np.uint8))
+        self._daq.air_sol_2.write(np.ones(10, dtype=np.uint8))
+
 
     def setup_stage(self):
         stage_ = stage.PhidgetStage(x_channel=self.config.phidget.channels.x,
@@ -117,6 +120,7 @@ class RemoteStageController(object):
         Async stuff
         :return:
         """
+
         self.monitor_thread = threading.Thread(target=self.monitor_limits)
         self.stage_thread = threading.Thread(target=self._stage.process_queue)
 
@@ -134,18 +138,17 @@ class RemoteStageController(object):
 
         while self._monitor_limits:
             for axis, task in self._limits.items():
-                value = task.read()
-                if not value and not self._limit_tripped[axis]:
+                if not task.read() and not self._limit_tripped[axis]:
                     logging.info(f'axis {axis} is at the limit switch')
                     self._stage._axes[axis].setEngaged(False)
                     self._limit_tripped[axis] = True
-                    #self.async_loop.run_in_executor(None, self.move_off_limit, axis, 5)
                     t = threading.Thread(target = self.move_off_limit, args = (axis, 5))
                     t.start()
 
-        time.sleep(.1)
+            time.sleep(.1)
 
     def move_off_limit(self, axis, step_size):
+        self.limit_lock.acquire()
         logging.info(f'attempting to move axis {axis} off limit switch')
         self._daq.clamp_0.write(self.clamp_table[axis][0])
         self._daq.clamp_1.write(self.clamp_table[axis][1])
@@ -156,10 +159,11 @@ class RemoteStageController(object):
             position = self._stage.position
             position[axis] += (step_size * self._limit_direction[axis] * -1)
             self._stage.move_to(position)
+
         self._daq.clamp_0.write(self.clamp_table['reset'][0])
         self._daq.clamp_1.write(self.clamp_table['reset'][1])
         self._limit_tripped[axis] = False
-
+        self.limit_lock.release()
         if self._homing_mode:
             axis += 1
             if axis > 2:
@@ -185,6 +189,9 @@ class RemoteStageController(object):
         self._current_homing_axis = 0
         self._stage.stop_motion()
         self.drive_axis_home(self._current_homing_axis)
+
+    def move_to(self, coords):
+        self._stage.move_to(coords)
 
 def main():
     parser = argparse.ArgumentParser()

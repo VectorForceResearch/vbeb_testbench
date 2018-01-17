@@ -293,6 +293,7 @@ class PhidgetStage(Stage):
             raise InvalidCoordinatesError
        # ax = [self._axes[0], self._axes[2]]
         try:
+            print('moving to', coordinates)
             for index, axis in enumerate(self._axes):
                 axis.setEngaged(True)
                 axis.setTargetPosition(coordinates[index])

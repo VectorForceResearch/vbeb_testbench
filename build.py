@@ -31,7 +31,7 @@ else:
 
 # project meta
 name = 'visual_behavior'
-version = '0.2.1'
+version = '0.3.5'
 summary = 'Prototype UI / Stage Hardware api'
 description = __doc__
 authors = (Author('Ross Hytnen', 'rossh@alleninstitute.org'),)

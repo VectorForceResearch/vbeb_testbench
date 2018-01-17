@@ -22,11 +22,11 @@ class NIDAQDigitalTask(NIDAQTask):
 
         self.fq_channel = f'{device_name}/{channel}'
         logging.info(f'Creating task: {self.fq_channel}')
-        self.task = PyDAQmx.Task()
+        #self.task = PyDAQmx.Task()
         if mode == 'di':
-            self.task.CreateDIChan(self.fq_channel.encode(), ''.encode(), PyDAQmx.DAQmx_Val_ChanForAllLines)
+            self.CreateDIChan(self.fq_channel.encode(), ''.encode(), PyDAQmx.DAQmx_Val_ChanForAllLines)
         elif mode == 'do':
-            self.task.CreateDOChan(self.fq_channel.encode(), ''.encode(), PyDAQmx.DAQmx_Val_ChanForAllLines)
+            self.CreateDOChan(self.fq_channel.encode(), ''.encode(), PyDAQmx.DAQmx_Val_ChanForAllLines)
         else:
             raise ValueError(f'Unknown mode: {mode}.  Valid modes are \'di\' and \'do\'.')
 
@@ -35,7 +35,7 @@ class NIDAQDigitalTask(NIDAQTask):
             raise TypeError(f'{self.fq_channel} is not configured for read.')
         read = PyDAQmx.int32()
         data = np.zeros(1000, dtype=np.uint32)
-        self.task.ReadDigitalU32(-1, .1, PyDAQmx.DAQmx_Val_GroupByChannel, data, 1000, ctypes.byref(read), None)
+        self.ReadDigitalU32(-1, .1, PyDAQmx.DAQmx_Val_GroupByChannel, data, 1000, ctypes.byref(read), None)
         return data[0]
 
     def write(self, data):
@@ -52,10 +52,8 @@ class NIDAQAnalogTask(NIDAQTask):
         self.device_name = device_name
         self.channel = channel
         self.mode = mode
-
         self.fq_channel = f'{device_name}/{channel}'
         logging.info(f'Creating task: {self.fq_channel}')
-
         if mode == 'ao_volt':
             self.CreateAOVoltageChan(f'{self.fq_channel}'.encode(), b'', -10.0, 10.0, PyDAQmx.DAQmx_Val_Volts,
                                           None)

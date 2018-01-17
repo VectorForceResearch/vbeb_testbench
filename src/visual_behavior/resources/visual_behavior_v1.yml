@@ -24,14 +24,12 @@ phidget:
     port: 6001
     default_velocity_mm_per_s: 200
     default_acceleration_mm_per_s2: 2500
-    default_stepsize_mm: 10
-
     # hardware attributes
-    steps_per_revolution: 15 # reference workflow document
-    distance_per_revolution_units: tbd
+    steps_per_revolution: 400 # reference workflow document
+    distance_per_revolution_mm: .609
     backlash_correction_mm: safe_number tbd
 
-    step_size: 200
+    step_size: 100
     # phidget board
     platform_id: test
     channels:
@@ -39,6 +37,7 @@ phidget:
         y: 1
         z: 2
 
+    full_stroke_revolutions: 22
 nidaq: # lines resolve to /dev9/port0/line5 for example
 
     # digital in
