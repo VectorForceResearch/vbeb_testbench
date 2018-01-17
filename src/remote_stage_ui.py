@@ -12,7 +12,7 @@ import redis
 import visual_behavior
 import yaml
 import sys
-from PyDAQmx import *
+#from PyDAQmx import *
 from qtmodern import styles, windows
 from qtpy import uic, QtCore
 from qtpy.QtCore import QTimer
@@ -55,8 +55,9 @@ class StageUI(QMainWindow):
                             'working': None,
                             'load': None,
                             'mouse': None}
-
+        self._ignore_limits = False
         self.db = self.setup_db()
+        self._spout_state = 0
 
     def log(self, message):
         logging.info(message)
@@ -144,6 +145,12 @@ class StageUI(QMainWindow):
         self.icon_blue = QIcon(self.module_path[0] + '/resources/led_blue.png')
         self.icon_green = QIcon(self.module_path[0] + '/resources/led_green.png')
 
+        self.ui.rb_x.toggled.connect(self.set_clamp)
+        self.ui.rb_y.toggled.connect(self.set_clamp)
+        self.ui.rb_z.toggled.connect(self.set_clamp)
+        self.ui.rb_reset.toggled.connect(self.set_clamp)
+        self.ui.cb_limits.state_changed.connect(self.signal_ignore_limits)
+
         for c, r in product([self.col_port, self.col_position], range(3)):
             item = QTableWidgetItem()
             item.setTextAlignment(QtCore.Qt.AlignCenter)
@@ -162,11 +169,33 @@ class StageUI(QMainWindow):
 
         self.disable_user_controls()
 
+    def set_clamp(self):
+        if self.ui.rb_x.isChecked():
+            self.hw_proxy.clamp_signal(0)
+        elif  self.ui.rb_y.isChecked():
+            self.hw_proxy.clamp_signal(1)
+        elif self.ui.rb_z.isChecked():
+            self.hw_proxy.clamp_signal(2)
+        elif self.ui.rb_reset.isChecked():
+            self.hw_proxy.clamp_signal('reset')
+
+    def signal_ignore_limits(self, state):
+        if state == QtCore.Qt.Checked:
+            self._ignore_limits = True
+            self.hw_proxy.ignore_limits(True)
+        else:
+            self._ignore_limits = False
+            self.hw_proxy.ignore_limits(False)
+
     def update_table(self):
         moving = self.stage.is_moving
         engaged = self.stage.is_engaged
         limits = self.stage.limits
         position = self.stage.position
+        if any(moving):
+            self.ui.lbl_status.setText('Status: Stage Moving')
+        else:
+            self.ui.lbl_status.setText('Status:')
 
         for i in range(3):
             if moving[i]:
@@ -196,7 +225,7 @@ class StageUI(QMainWindow):
             return
 
         if self.ui.le_step_size.text() != '':
-            step = self.ui.le_step_size.text()
+            step = float(self.ui.le_step_size.text())
         else:
             step = self.config.phidget.step_size
         position = self.stage.position
@@ -308,6 +337,14 @@ class StageUI(QMainWindow):
         modifiers = QApplication.keyboardModifiers()
         if event.key() == QtCore.Qt.Key_A:
             self.axis_step(0, -1)
+        if event.key() == QtCore.Qt.Key_Space:
+            if self._spout_state:
+                self.signal_retract_lickspout()
+                self._spout_state = 0
+            else:
+                self.signal_extend_lickspout()
+                self._spout_state = 1
+
         elif event.key() == QtCore.Qt.Key_D:
             if modifiers == (QtCore.Qt.ControlModifier | QtCore.Qt.ShiftModifier):
                 if self.admin_enabled:
