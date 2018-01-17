@@ -78,7 +78,12 @@ class NIDAQio(object):
         if result != 0:
             raise NIDAQNotFoundError(f'Could not find NIDAQ device: {result}')
         self.device_name = buffer.value
-        logging.info(f'Found NIDAQ device: {self.device_name.decode()}')
+        logging.info(f'Found NIDAQ device(s): {self.device_name.decode()}')
+        if b',' in self.device_name:
+            logging.info('More than one device located.')
+            self.device_name = self.device_name.decode().split(',')[0].strip().encode()
+
+        logging.info(f'Using device {self.device_name}')
 
     def _can_add_task(self, name, overwrite):
         """

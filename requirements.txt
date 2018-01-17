@@ -4,3 +4,4 @@ PyYaml
 redis
 numpy
 pydaqmx
+pyqt5

@@ -9,3 +9,4 @@ Sphinx>=1.4.8
 pytest>=2.9.2
 fabric3>=1.13.1
 pybuilder-pytest>=1.0.0
+pybuilder

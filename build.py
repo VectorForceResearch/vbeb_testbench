@@ -21,7 +21,7 @@ if 'windows' not in platform.system().lower() or sys.version_info.major == 3:
     use_plugin('python.sphinx')
     default_task = ['install_dependencies',
  #p                   'analyze',
-                    'sphinx_generate_documentation',
+                    'sphinx_build',
                     'publish']
 else:
     default_task = ['install_dependencies',
@@ -31,7 +31,7 @@ else:
 
 # project meta
 name = 'visual_behavior'
-version = '0.3.5'
+version = '0.3.11'
 summary = 'Prototype UI / Stage Hardware api'
 description = __doc__
 authors = (Author('Ross Hytnen', 'rossh@alleninstitute.org'),)
