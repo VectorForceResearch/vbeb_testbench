@@ -358,6 +358,9 @@ class StageUI(QMainWindow):
         if event.key() == QtCore.Qt.Key_A:
             self.axis_step(0, -1)
         if event.key() == QtCore.Qt.Key_Space:
+            if not self.admin_enabled:
+                return
+            
             if self._spout_state:
                 self.signal_retract_lickspout()
                 self._spout_state = 0
@@ -365,7 +368,7 @@ class StageUI(QMainWindow):
                 self.signal_extend_lickspout()
                 self._spout_state = 1
 
-        elif event.key() == QtCore.Qt.Key_D:
+        if event.key() == QtCore.Qt.Key_D:
             if modifiers == (QtCore.Qt.ControlModifier | QtCore.Qt.ShiftModifier):
                 if self.admin_enabled:
                     self.admin_enabled = False
