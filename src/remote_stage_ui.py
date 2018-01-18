@@ -112,9 +112,16 @@ class StageUI(QMainWindow):
         """
         self.ui.toolBox.setItemEnabled(1, False)
         rigs = self.config.installation.rigs._asdict()
+        rig_rbs = [self.ui.rb_box1, self.ui.rb_box2, self.ui.rb_box3, self.ui.rb_box4, self.ui.rb_box5,self.ui.rb_box6]
+        rig_index = 0
         for alias, host in rigs.items():
-            self.ui.cb_rigs.addItem(f'{alias}: {host}')
-        self.ui.cb_rigs.currentIndexChanged.connect(self.signal_connect_to_rig)
+            rig_rbs[rig_index].setText(f'{alias}: {host}')
+            rig_rbs[rig_index].toggled.connect(partial(self.signal_connect_to_rig, host))
+            rig_index += 1
+            if rig_index >= 6:
+                break
+
+        self.ui.rb_disconnect.toggled.connect(partial(self.signal_connect_to_rig, 'None'))
         self.ui.btn_moveto.clicked.connect(self.signal_move_to)
         self.ui.btn_extend.clicked.connect(self.signal_extend_lickspout)
         self.ui.btn_retract.clicked.connect(self.signal_retract_lickspout)
@@ -127,7 +134,7 @@ class StageUI(QMainWindow):
         self.ui.btn_x_plus.clicked.connect(partial(self.axis_step, 0, 1))
         self.ui.btn_x_minus.clicked.connect(partial(self.axis_step, 0, -1))
         self.ui.btn_stop.clicked.connect(self.signal_stop)
-
+        self.ui.btn_emergency.clicked.connect(self.signal_emergency)
         self.ui.btn_register_working.clicked.connect(partial(self.register_coordinates, 'working'))
         self.ui.btn_register_load.clicked.connect(partial(self.register_coordinates, 'load'))
         self.ui.btn_register_mouse.clicked.connect(partial(self.register_coordinates, 'mouse'))
@@ -145,10 +152,10 @@ class StageUI(QMainWindow):
         self.icon_blue = QIcon(self.module_path[0] + '/resources/led_blue.png')
         self.icon_green = QIcon(self.module_path[0] + '/resources/led_green.png')
 
-        self.ui.rb_x.toggled.connect(self.set_clamp)
-        self.ui.rb_y.toggled.connect(self.set_clamp)
-        self.ui.rb_z.toggled.connect(self.set_clamp)
-        self.ui.rb_reset.toggled.connect(self.set_clamp)
+        self.ui.btn_x_release.clicked.connect(partial(self.set_clamp, 0))
+        self.ui.btn_x_release.clicked.connect(partial(self.set_clamp, 1))
+        self.ui.btn_x_release.clicked.connect(partial(self.set_clamp, 2))
+        self.ui.btn_reset.clicked.connect(partial(self.set_clamp, 'reset'))
         self.ui.cb_limits.toggled.connect(self.signal_ignore_limits)
 
         for c, r in product([self.col_port, self.col_position], range(3)):
@@ -169,15 +176,12 @@ class StageUI(QMainWindow):
 
         self.disable_user_controls()
 
-    def set_clamp(self):
-        if self.ui.rb_x.isChecked():
-            self.hw_proxy.clamp_signal(0)
-        elif  self.ui.rb_y.isChecked():
-            self.hw_proxy.clamp_signal(1)
-        elif self.ui.rb_z.isChecked():
-            self.hw_proxy.clamp_signal(2)
-        elif self.ui.rb_reset.isChecked():
-            self.hw_proxy.clamp_signal('reset')
+    def set_clamp(self, axis):
+        self.hw_proxy.clamp_signal(axis)
+
+    def signal_emergency(self):
+        self.signal_retract_lickspout()
+        self.hw_proxy.stop_motion()
 
     def signal_ignore_limits(self, state):
         if self.ui.cb_limits.isChecked():
@@ -245,6 +249,23 @@ class StageUI(QMainWindow):
             self.coordinates[name] = coords
             self.log('setting {name} to {coords}')
             self.db[key] = yaml.dump(coords)
+
+            '''There is a hardware mixup preventing proper registration o Load/Unload.  For now it is set as an 
+            x-translation o working'''
+
+            if name == 'working':
+                coords[0] += self.config.load_x_translation
+                self.log(f'setting load to {coords}')
+                self.coordinates['load'] = coords
+                self.db[f'{self._stage.serial}_load'] = yaml.dump(coords)
+
+                ''' b/c we can get stuck on the monument, we will retract the lickspout, move about, and extend again'''
+                self.signal_retract_lickspout()
+                coords = list(self.stage.position)
+                coords[2] -= 10
+                self.move_to_coordinates(coords)
+                QTimer.singleShot(200, self.signal_extend_lickspout)
+
         except Exception as err:
             self.log(f'Error recording {name} coordinates to the db')
             self.log(f'{err}')
@@ -281,9 +302,9 @@ class StageUI(QMainWindow):
             print('error:', err)
             pass
 
-    def signal_connect_to_rig(self, i):
-        text = self.ui.cb_rigs.currentText()
-        if text == 'None':
+    def signal_connect_to_rig(self, host):
+
+        if host == 'None':
             self.table_timer.stop()
             self.hw_proxy = None
             self.stage = None
@@ -298,7 +319,6 @@ class StageUI(QMainWindow):
                 self.ui.tbl_stage.item(i, self.col_port).setText('')
             return
 
-        host = self.ui.cb_rigs.currentText().split(':')[1].strip()
         self.log(f'Connecting to {host}')
         self.hw_proxy = ZROProxy(host=(host, 6001))
         self.stage = self.hw_proxy
@@ -395,7 +415,7 @@ def main():
     app = QApplication(sys.argv)
     main_window = StageUI()
     main_window.setFixedWidth(600)
-    main_window.setFixedHeight(520)
+    main_window.setFixedHeight(575)
     hostname = socket.gethostname()
     main_window.setWindowTitle(f'Stage Controller ({hostname})')
     styles.dark(app)

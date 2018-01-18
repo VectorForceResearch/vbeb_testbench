@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>607</width>
-    <height>535</height>
+    <height>572</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -37,7 +37,7 @@
        <bool>true</bool>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="page_user">
        <property name="geometry">
@@ -45,48 +45,12 @@
          <x>0</x>
          <y>0</y>
          <width>589</width>
-         <height>431</height>
+         <height>468</height>
         </rect>
        </property>
        <attribute name="label">
         <string>Remote Stage Controller</string>
        </attribute>
-       <widget class="QComboBox" name="cb_rigs">
-        <property name="geometry">
-         <rect>
-          <x>130</x>
-          <y>10</y>
-          <width>141</width>
-          <height>35</height>
-         </rect>
-        </property>
-        <property name="editable">
-         <bool>false</bool>
-        </property>
-        <item>
-         <property name="text">
-          <string>None</string>
-         </property>
-        </item>
-       </widget>
-       <widget class="QLabel" name="label">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>111</width>
-          <height>35</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Connected To:</string>
-        </property>
-       </widget>
        <widget class="QPushButton" name="btn_load">
         <property name="enabled">
          <bool>true</bool>
@@ -94,7 +58,7 @@
         <property name="geometry">
          <rect>
           <x>410</x>
-          <y>170</y>
+          <y>224</y>
           <width>150</width>
           <height>35</height>
          </rect>
@@ -115,7 +79,7 @@
         <property name="geometry">
          <rect>
           <x>410</x>
-          <y>220</y>
+          <y>274</y>
           <width>150</width>
           <height>35</height>
          </rect>
@@ -136,7 +100,7 @@
         <property name="geometry">
          <rect>
           <x>410</x>
-          <y>70</y>
+          <y>124</y>
           <width>150</width>
           <height>35</height>
          </rect>
@@ -157,7 +121,7 @@
         <property name="geometry">
          <rect>
           <x>410</x>
-          <y>120</y>
+          <y>174</y>
           <width>150</width>
           <height>35</height>
          </rect>
@@ -178,7 +142,7 @@
         <property name="geometry">
          <rect>
           <x>180</x>
-          <y>360</y>
+          <y>414</y>
           <width>150</width>
           <height>35</height>
          </rect>
@@ -199,7 +163,7 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>360</y>
+          <y>414</y>
           <width>150</width>
           <height>35</height>
          </rect>
@@ -220,7 +184,7 @@
         <property name="geometry">
          <rect>
           <x>91</x>
-          <y>66</y>
+          <y>120</y>
           <width>80</width>
           <height>73</height>
          </rect>
@@ -243,7 +207,7 @@
         <property name="geometry">
          <rect>
           <x>91</x>
-          <y>145</y>
+          <y>199</y>
           <width>80</width>
           <height>83</height>
          </rect>
@@ -272,7 +236,7 @@
         <property name="geometry">
          <rect>
           <x>300</x>
-          <y>234</y>
+          <y>288</y>
           <width>77</width>
           <height>73</height>
          </rect>
@@ -298,7 +262,7 @@
         <property name="geometry">
          <rect>
           <x>177</x>
-          <y>150</y>
+          <y>204</y>
           <width>77</width>
           <height>73</height>
          </rect>
@@ -327,7 +291,7 @@
         <property name="geometry">
          <rect>
           <x>8</x>
-          <y>150</y>
+          <y>204</y>
           <width>77</width>
           <height>73</height>
          </rect>
@@ -353,7 +317,7 @@
         <property name="geometry">
          <rect>
           <x>91</x>
-          <y>234</y>
+          <y>288</y>
           <width>80</width>
           <height>73</height>
          </rect>
@@ -379,7 +343,7 @@
         <property name="geometry">
          <rect>
           <x>300</x>
-          <y>66</y>
+          <y>120</y>
           <width>77</width>
           <height>73</height>
          </rect>
@@ -402,7 +366,7 @@
         <property name="geometry">
          <rect>
           <x>300</x>
-          <y>146</y>
+          <y>200</y>
           <width>80</width>
           <height>83</height>
          </rect>
@@ -428,7 +392,7 @@
         <property name="geometry">
          <rect>
           <x>270</x>
-          <y>80</y>
+          <y>134</y>
           <width>20</width>
           <height>221</height>
          </rect>
@@ -441,7 +405,7 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>316</y>
+          <y>370</y>
           <width>551</width>
           <height>16</height>
          </rect>
@@ -454,7 +418,7 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>50</y>
+          <y>100</y>
           <width>551</width>
           <height>16</height>
          </rect>
@@ -467,7 +431,7 @@
         <property name="geometry">
          <rect>
           <x>380</x>
-          <y>80</y>
+          <y>134</y>
           <width>20</width>
           <height>221</height>
          </rect>
@@ -480,7 +444,7 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>334</y>
+          <y>388</y>
           <width>151</width>
           <height>21</height>
          </rect>
@@ -501,7 +465,7 @@
         <property name="geometry">
          <rect>
           <x>410</x>
-          <y>340</y>
+          <y>394</y>
           <width>150</width>
           <height>61</height>
          </rect>
@@ -519,7 +483,7 @@
         <property name="geometry">
          <rect>
           <x>380</x>
-          <y>340</y>
+          <y>394</y>
           <width>20</width>
           <height>61</height>
          </rect>
@@ -532,7 +496,7 @@
         <property name="geometry">
          <rect>
           <x>450</x>
-          <y>10</y>
+          <y>70</y>
           <width>111</width>
           <height>35</height>
          </rect>
@@ -542,7 +506,7 @@
         <property name="geometry">
          <rect>
           <x>360</x>
-          <y>10</y>
+          <y>70</y>
           <width>81</width>
           <height>35</height>
          </rect>
@@ -560,7 +524,7 @@
         <property name="geometry">
          <rect>
           <x>410</x>
-          <y>280</y>
+          <y>334</y>
           <width>151</width>
           <height>21</height>
          </rect>
@@ -574,6 +538,135 @@
          <string>Status: </string>
         </property>
        </widget>
+       <widget class="QRadioButton" name="rb_box1">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>0</y>
+          <width>165</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Machine 1</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="rb_box2">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>20</y>
+          <width>165</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Machine 2</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="rb_box3">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>40</y>
+          <width>165</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Machine 3</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="rb_box4">
+        <property name="geometry">
+         <rect>
+          <x>190</x>
+          <y>0</y>
+          <width>165</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Machine 4</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="rb_box5">
+        <property name="geometry">
+         <rect>
+          <x>190</x>
+          <y>20</y>
+          <width>165</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Machine 5</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="rb_box6">
+        <property name="geometry">
+         <rect>
+          <x>190</x>
+          <y>40</y>
+          <width>165</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Machine 6</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="rb_disconnect">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>60</y>
+          <width>111</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Disconnect</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
       </widget>
       <widget class="QWidget" name="page_admin">
        <property name="enabled">
@@ -584,7 +677,7 @@
          <x>0</x>
          <y>0</y>
          <width>589</width>
-         <height>431</height>
+         <height>468</height>
         </rect>
        </property>
        <attribute name="label">
@@ -692,42 +785,6 @@
          </property>
         </item>
        </widget>
-       <widget class="QComboBox" name="cb_rigs_2">
-        <property name="geometry">
-         <rect>
-          <x>110</x>
-          <y>0</y>
-          <width>221</width>
-          <height>35</height>
-         </rect>
-        </property>
-        <property name="editable">
-         <bool>false</bool>
-        </property>
-        <item>
-         <property name="text">
-          <string>None</string>
-         </property>
-        </item>
-       </widget>
-       <widget class="QLabel" name="label_2">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>111</width>
-          <height>35</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Connected To:</string>
-        </property>
-       </widget>
        <widget class="QPushButton" name="btn_adm_mouse">
         <property name="enabled">
          <bool>true</bool>
@@ -735,7 +792,7 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>340</y>
+          <y>380</y>
           <width>100</width>
           <height>35</height>
          </rect>
@@ -756,7 +813,7 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>220</y>
+          <y>230</y>
           <width>100</width>
           <height>35</height>
          </rect>
@@ -777,7 +834,7 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>300</y>
+          <y>280</y>
           <width>100</width>
           <height>35</height>
          </rect>
@@ -798,7 +855,7 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>260</y>
+          <y>330</y>
           <width>100</width>
           <height>35</height>
          </rect>
@@ -814,12 +871,12 @@
        </widget>
        <widget class="QPushButton" name="btn_register_load">
         <property name="enabled">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
         <property name="geometry">
          <rect>
           <x>120</x>
-          <y>300</y>
+          <y>280</y>
           <width>100</width>
           <height>35</height>
          </rect>
@@ -840,7 +897,7 @@
         <property name="geometry">
          <rect>
           <x>120</x>
-          <y>340</y>
+          <y>380</y>
           <width>100</width>
           <height>35</height>
          </rect>
@@ -861,7 +918,7 @@
         <property name="geometry">
          <rect>
           <x>120</x>
-          <y>260</y>
+          <y>330</y>
           <width>100</width>
           <height>35</height>
          </rect>
@@ -1020,58 +1077,6 @@
          <string>Stop</string>
         </property>
        </widget>
-       <widget class="QRadioButton" name="rb_reset">
-        <property name="geometry">
-         <rect>
-          <x>240</x>
-          <y>230</y>
-          <width>100</width>
-          <height>35</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Reset </string>
-        </property>
-       </widget>
-       <widget class="QRadioButton" name="rb_x">
-        <property name="geometry">
-         <rect>
-          <x>240</x>
-          <y>270</y>
-          <width>100</width>
-          <height>35</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>x Release</string>
-        </property>
-       </widget>
-       <widget class="QRadioButton" name="rb_z">
-        <property name="geometry">
-         <rect>
-          <x>240</x>
-          <y>350</y>
-          <width>100</width>
-          <height>35</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Z Release</string>
-        </property>
-       </widget>
-       <widget class="QRadioButton" name="rb_y">
-        <property name="geometry">
-         <rect>
-          <x>240</x>
-          <y>310</y>
-          <width>100</width>
-          <height>35</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>y Release</string>
-        </property>
-       </widget>
        <widget class="QLabel" name="label_8">
         <property name="geometry">
          <rect>
@@ -1099,11 +1104,100 @@
           <height>35</height>
          </rect>
         </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
         <property name="layoutDirection">
          <enum>Qt::RightToLeft</enum>
         </property>
         <property name="text">
          <string>Ignore Limits</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="btn_z_release">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>240</x>
+          <y>380</y>
+          <width>100</width>
+          <height>35</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Z Release</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="btn_y_release">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>240</x>
+          <y>330</y>
+          <width>100</width>
+          <height>35</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Y Release</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="btn_x_release">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>240</x>
+          <y>280</y>
+          <width>100</width>
+          <height>35</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>X Release</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="btn_reset">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>240</x>
+          <y>230</y>
+          <width>100</width>
+          <height>35</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Reset</string>
         </property>
        </widget>
       </widget>
