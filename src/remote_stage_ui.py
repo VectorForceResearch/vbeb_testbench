@@ -149,7 +149,7 @@ class StageUI(QMainWindow):
         self.ui.rb_y.toggled.connect(self.set_clamp)
         self.ui.rb_z.toggled.connect(self.set_clamp)
         self.ui.rb_reset.toggled.connect(self.set_clamp)
-        self.ui.cb_limits.state_changed.connect(self.signal_ignore_limits)
+        self.ui.cb_limits.toggled.connect(self.signal_ignore_limits)
 
         for c, r in product([self.col_port, self.col_position], range(3)):
             item = QTableWidgetItem()
@@ -180,7 +180,7 @@ class StageUI(QMainWindow):
             self.hw_proxy.clamp_signal('reset')
 
     def signal_ignore_limits(self, state):
-        if state == QtCore.Qt.Checked:
+        if self.ui.cb_limits.isChecked():
             self._ignore_limits = True
             self.hw_proxy.ignore_limits(True)
         else:

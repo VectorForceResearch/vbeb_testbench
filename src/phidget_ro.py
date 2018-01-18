@@ -46,11 +46,8 @@ class RemoteStageController(object):
         self.limit_lock = threading.Lock()
         self._ignore_limits = False
 
-    @property
-    def ignore_limits(self):
-        return self._ignore_limits
 
-    @ignore_limits.setter
+
     def ignore_limits(self, value):
         if value:
             self._ignore_limits = True
@@ -92,6 +89,7 @@ class RemoteStageController(object):
         return self._daq
 
     def clamp_signal(self, axis):
+        logging.info(f'Sending clamp signal for axis {axis}')
         self._daq.clamp_0.write(self.clamp_table[axis][0])
         self._daq.clamp_1.write(self.clamp_table[axis][1])
 
