@@ -89,7 +89,8 @@ def initialize(project):
     project.set_property('dir_source_pytest_python', "tests")
 
     project.install_dependencies_index_url = 'http://aibspi:3141/aibs/dev'
-    project.nstall_dependencies_insecure_installation = ['aibspi']
+    project.install_dependencies_insecure_installation = ['aibspi']
+
     # documentation
     project.set_property('dir_docs', 'docs')
     project.set_property('sphinx_config_path', 'docs/')
