@@ -78,6 +78,10 @@ def initialize_deploy(logger):
 
 @init
 def initialize(project, logger):
+    #import os
+    ##os.environ['PIP_INDEX_URL']='http://aibspi:3141/aibs/dev'
+    #os.environ['PIP_TRUSTED_HOST']='aibsi'
+
     project.set_property('verbose', True)
 
     # modules / di  st
@@ -88,8 +92,8 @@ def initialize(project, logger):
     # testing
     project.set_property('dir_source_pytest_python', "tests")
 
-    project.set_property('install_dependencies_index_url', 'http://aibspi:3141/aibs/dev')
-    project.set_property('install_dependencies_insecure_installation',['aibspi'])
+    #project.set_property('install_dependencies_index_url', 'http://aibspi:3141/aibs/dev')
+    #project.set_property('install_dependencies_insecure_installation',['aibspi'])
 
     # documentation
     project.set_property('dir_docs', 'docs')
@@ -106,13 +110,11 @@ def initialize(project, logger):
     # dependencies
     project.build_depends_on_requirements('requirements_dev.txt')
 
-    #project.depends_on_requirements('requirements.txt')
+    #.depends_on_requirements('requirements.txt')
     with open('requirements.txt', 'r') as f:
-        for line in  f.readlines():
+        for line in f.readlines():
             if line[0] != '-':
-                logger.info(f'depends on: {line}')
                 project.depends_on(line.strip())
-
     # entry points (typically the .py files in visual_behavior
     project.set_property('distutils_entry_points',
                          {'console_scripts': [
@@ -125,3 +127,5 @@ def initialize(project, logger):
         for file, pattern in itertools.product(files, resource_patterns):
             if pattern in file.lower():
                 project.include_file('visual_behavior', directory + '/' + file)
+
+
