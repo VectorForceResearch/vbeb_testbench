@@ -12,7 +12,7 @@ import redis
 import visual_behavior
 import yaml
 import sys
-#from PyDAQmx import *
+# from PyDAQmx import *
 from qtmodern import styles, windows
 from qtpy import uic, QtCore
 from qtpy.QtCore import QTimer
@@ -20,6 +20,7 @@ from qtpy.QtGui import QIcon, QPixmap
 from qtpy.QtWidgets import *
 import hashlib
 from aibsmw import ZROProxy
+
 
 class StageUI(QMainWindow):
     col_connected = 0
@@ -112,7 +113,7 @@ class StageUI(QMainWindow):
         """
         self.ui.toolBox.setItemEnabled(1, False)
         rigs = self.config.installation.rigs._asdict()
-        rig_rbs = [self.ui.rb_box1, self.ui.rb_box2, self.ui.rb_box3, self.ui.rb_box4, self.ui.rb_box5,self.ui.rb_box6]
+        rig_rbs = [self.ui.rb_box1, self.ui.rb_box2, self.ui.rb_box3, self.ui.rb_box4, self.ui.rb_box5, self.ui.rb_box6]
         rig_index = 0
         for alias, host in rigs.items():
             rig_rbs[rig_index].setText(f'{alias}: {host}')
@@ -128,8 +129,8 @@ class StageUI(QMainWindow):
         self.ui.btn_home.clicked.connect(self.signal_home_stage)
         self.ui.btn_adm_home.clicked.connect(self.signal_home_stage)
         self.ui.btn_z_plus.clicked.connect(partial(self.axis_step, 2, 1))
-        self.ui.btn_z_minus.clicked.connect(partial(self.axis_step, 2,  -1))
-        self.ui.btn_y_plus.clicked.connect(partial(self.axis_step, 1,  1))
+        self.ui.btn_z_minus.clicked.connect(partial(self.axis_step, 2, -1))
+        self.ui.btn_y_plus.clicked.connect(partial(self.axis_step, 1, 1))
         self.ui.btn_y_minus.clicked.connect(partial(self.axis_step, 1, -1))
         self.ui.btn_x_plus.clicked.connect(partial(self.axis_step, 0, 1))
         self.ui.btn_x_minus.clicked.connect(partial(self.axis_step, 0, -1))
@@ -322,7 +323,7 @@ class StageUI(QMainWindow):
         self.log(f'Connecting to {host}')
         self.hw_proxy = ZROProxy(host=(host, 6001))
         self.stage = self.hw_proxy
-        #self.daq = self.hw_proxy.daq
+        # self.daq = self.hw_proxy.daq
         self.load_stage_coordinates()
         self.log(f'Connected to stage: {self.hw_proxy.stage_serial}')
         self.enable_user_controls()

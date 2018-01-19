@@ -3,13 +3,15 @@
 
 # TODO:  Mouse ID
 
+import asyncio
 import datetime
 import logging
 import socket
 import time
 from functools import partial
 from itertools import product
-import sys
+from threading import Lock
+
 import PyDAQmx
 import numpy as np
 import redis
@@ -24,9 +26,6 @@ from qtpy.QtGui import QIcon, QPixmap
 from qtpy.QtWidgets import *
 from visual_behavior import InitializationError
 from visual_behavior import PhidgetStage
-from ctypes import byref
-from threading import Lock
-import asyncio
 
 
 class AxisControl(object):
@@ -58,6 +57,7 @@ class AxisControl(object):
     def led_color(self, color):
         if color in self.leds:
             self.led.setPixmap(self.leds[color])
+
 
 class StageUI(QMainWindow):
     col_connected = 0
@@ -170,8 +170,6 @@ class StageUI(QMainWindow):
 
         self.loop = asyncio.get_event_loop()
 
-
-
     def setup_db(self):
         """
 
@@ -214,7 +212,6 @@ class StageUI(QMainWindow):
         position = self.stage.position
         position[axis] += (10000 * self._limit_direction[axis])
         self.stage.append_move(position)
-
 
     def drive_timeout(self):
         """
@@ -269,7 +266,7 @@ class StageUI(QMainWindow):
                 self.display_position()
                 self.stage._axes[axmap[axis]].setEngaged(False)
                 self._limit_tripped[axmap[axis]] = True
-                self.loop.run_in_executor(None, self.move_off_limit,axmap[axis], 5)
+                self.loop.run_in_executor(None, self.move_off_limit, axmap[axis], 5)
             elif data[0] >= 1:
                 buttons[axis][1].setEnabled(True)
                 buttons[axis][2].setEnabled(True)
@@ -628,7 +625,7 @@ class StageUI(QMainWindow):
         self.task_a1.StopTask()
 
         self._limit_tripped[axis] = False
-        #self._limit_lock.release()
+        # self._limit_lock.release()
         self.log(f'{self.axes[axis]} moved off limit.')
         if self._homing_mode:
 
