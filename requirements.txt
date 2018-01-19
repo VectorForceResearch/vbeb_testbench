@@ -1,5 +1,3 @@
---index-url http://aibspi:3141/aibs/dev
---trusted-host aibspi
 qtpy
 qtmodern
 PyYaml
