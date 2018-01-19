@@ -257,7 +257,7 @@ class StageUI(QMainWindow):
                 coords[0] += self.config.load_x_translation
                 self.log(f'setting load to {coords}')
                 self.coordinates['load'] = coords
-                self.db[f'{self._stage.serial}_load'] = yaml.dump(coords)
+                self.db[f'{self.hw_proxy.serial}_load'] = yaml.dump(coords)
 
                 ''' b/c we can get stuck on the monument, we will retract the lickspout, move about, and extend again'''
                 self.signal_retract_lickspout()
@@ -360,7 +360,7 @@ class StageUI(QMainWindow):
         if event.key() == QtCore.Qt.Key_Space:
             if not self.admin_enabled:
                 return
-            
+
             if self._spout_state:
                 self.signal_retract_lickspout()
                 self._spout_state = 0
