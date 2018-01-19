@@ -5,7 +5,6 @@ version: 1
 installation:
     root_dir: c:/ProgramData/AIBS_MPE/VisualBehavior
     rigs:
-        test: localhost
         D1: w7vs-syslogic19
         D2: w7vs-syslogic20
         D3: w7vs-syslogic21
