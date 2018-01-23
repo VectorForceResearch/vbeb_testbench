@@ -39,6 +39,7 @@ phidget:
         z: 2
 
     full_stroke_revolutions: 22
+
 nidaq: # lines resolve to /dev9/port0/line5 for example
 
     # digital in
@@ -49,6 +50,9 @@ nidaq: # lines resolve to /dev9/port0/line5 for example
     # digital out
     air_solenoid_1: port1/line3
     air_solenoid_2: port2/line0
+
+    water_solenoid_1: port0/line7
+    water_solenoid_2: port1/line1
 
     # analog out
     clamp_0: ao0

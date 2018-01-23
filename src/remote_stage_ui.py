@@ -10,6 +10,7 @@ from functools import partial
 from itertools import product
 import redis
 import visual_behavior
+from visual_behavior import hardware_proxy
 import yaml
 import sys
 # from PyDAQmx import *
@@ -40,7 +41,7 @@ class StageUI(QMainWindow):
         self.admin_digest = b'!#/)zW\xa5\xa7C\x89J\x0eJ\x80\x1f\xc3'  # obviously get this from db
         self.admin_enabled = False
 
-        self.hw_proxy = None
+        self.hw_proxy = hardware_proxy.RemoteStageController()
         self.stage = None
         self.daq = None
 
@@ -60,19 +61,14 @@ class StageUI(QMainWindow):
         self.db = self.setup_db()
         self._spout_state = 0
 
+        self.signal_connect_to_rig('localhost')
+
     def log(self, message):
         logging.info(message)
         self.ui.statusBar.showMessage(message)
 
     def setup_db(self):
-        db = redis.StrictRedis(host=self.config.redis.host, db=self.config.redis.db, port=self.config.redis.port)
-        db_string = f'{self.config.redis.host}:{self.config.redis.port} ({self.config.redis.db})'
-        try:
-            db.info()
-            self.log(f'Connected to database: {db_string}')
-        except ConnectionRefusedError as err:
-            self.log(f'Failed to connected to database: {db_string}: {err}')
-
+        db = {}
         return db
 
     def load_stage_coordinates(self):
@@ -84,12 +80,12 @@ class StageUI(QMainWindow):
         key = f'{self.stage.serial}'
 
         safe_coords = f'{key}_working'
-        if self.db.exists(safe_coords):
+        if safe_coords in self.db:
             self.coordinates['working'] = yaml.load(self.db[safe_coords])
             self.ui.lbl_coords_safe.setText(f'({coords[0]}, {coords[1]}, {coords[2]})')
 
         origin_coords = f'{key}_load'
-        if self.db.exists(origin_coords):
+        if origin_coords in self.db:
             self.coordinates['load'] = yaml.load(self.db[origin_coords])
             self.ui.lbl_coords_origin.setText(f'({coords[0]}, {coords[1]},{coords[2]})')
 
@@ -100,7 +96,7 @@ class StageUI(QMainWindow):
         """
 
         key = f'{self.stage.serial}_{self.ui.le_mouse_id}'
-        if self.db.exists(key):
+        if key in self.db:
             self.coordinates['mouse'] = yaml.load(self.db[key])
             self.log(f'loaded mouse offset: ({coords[0]}, {coords[1]}, {coords[2]})')
         else:
@@ -111,23 +107,15 @@ class StageUI(QMainWindow):
 
         :return:
         """
-        self.ui.toolBox.setItemEnabled(1, False)
-        rigs = self.config.installation.rigs._asdict()
-        rig_rbs = [self.ui.rb_box1, self.ui.rb_box2, self.ui.rb_box3, self.ui.rb_box4, self.ui.rb_box5, self.ui.rb_box6]
-        rig_index = 0
-        for alias, host in rigs.items():
-            rig_rbs[rig_index].setText(f'{alias}: {host}')
-            rig_rbs[rig_index].toggled.connect(partial(self.signal_connect_to_rig, host))
-            rig_index += 1
-            if rig_index >= 6:
-                break
 
-        self.ui.rb_disconnect.toggled.connect(partial(self.signal_connect_to_rig, 'None'))
+
         self.ui.btn_moveto.clicked.connect(self.signal_move_to)
-        self.ui.btn_extend.clicked.connect(self.signal_extend_lickspout)
-        self.ui.btn_retract.clicked.connect(self.signal_retract_lickspout)
+        self.ui.btn_air_1.clicked.connect(self.signal_extend_lickspout)
+        self.ui.btn_air_2.clicked.connect(self.signal_retract_lickspout)
+        self.ui.btn_water_1.clicked.connect(self.signal_water_sol_1)
+        self.ui.btn_water_2.clicked.connect(self.signal_water_sol_2)
         self.ui.btn_home.clicked.connect(self.signal_home_stage)
-        self.ui.btn_adm_home.clicked.connect(self.signal_home_stage)
+
         self.ui.btn_z_plus.clicked.connect(partial(self.axis_step, 2, 1))
         self.ui.btn_z_minus.clicked.connect(partial(self.axis_step, 2, -1))
         self.ui.btn_y_plus.clicked.connect(partial(self.axis_step, 1, 1))
@@ -144,9 +132,7 @@ class StageUI(QMainWindow):
         self.ui.btn_working.clicked.connect(partial(self.move_to_coordinates, 'working'))
         self.ui.btn_load.clicked.connect(partial(self.move_to_coordinates, 'load'))
         self.ui.btn_mouse.clicked.connect(partial(self.move_to_coordinates, 'mouse'))
-        self.ui.btn_adm_working.clicked.connect(partial(self.move_to_coordinates, 'working'))
-        self.ui.btn_adm_load.clicked.connect(partial(self.move_to_coordinates, 'load'))
-        self.ui.btn_adm_mouse.clicked.connect(partial(self.move_to_coordinates, 'mouse'))
+
 
         self.icon_clear = QIcon(self.module_path[0] + '/resources/led_clear.png')
         self.icon_red = QIcon(self.module_path[0] + '/resources/led_red.png')
@@ -293,6 +279,12 @@ class StageUI(QMainWindow):
     def signal_extend_lickspout(self):
         self.hw_proxy.extend_lickspout()
 
+    def signal_water_sol_1(self):
+        self.hw_proxy.signal_water_sol_1()
+
+    def signal_water_sol_2(self):
+        self.hw_proxy.signal_water_sol_2()
+
     def signal_move_to(self):
         try:
             x = float(self.ui.le_x.text())
@@ -304,27 +296,11 @@ class StageUI(QMainWindow):
             pass
 
     def signal_connect_to_rig(self, host):
+        host = 'localhost'
 
-        if host == 'None':
-            self.table_timer.stop()
-            self.hw_proxy = None
-            self.stage = None
-            self.daq = None
-            self.disable_user_controls()
-            for i in range(3):
-                self.ui.tbl_stage.cellWidget(i, self.col_connected).setIcon(self.icon_clear)
-                self.ui.tbl_stage.cellWidget(i, self.col_engaged).setIcon(self.icon_clear)
-                self.ui.tbl_stage.cellWidget(i, self.col_limit).setIcon(self.icon_clear)
-                self.ui.tbl_stage.cellWidget(i, self.col_moving).setIcon(self.icon_clear)
-                self.ui.tbl_stage.item(i, self.col_position).setText('')
-                self.ui.tbl_stage.item(i, self.col_port).setText('')
-            return
-
-        self.log(f'Connecting to {host}')
-        self.hw_proxy = ZROProxy(host=(host, 6001))
         self.stage = self.hw_proxy
         # self.daq = self.hw_proxy.daq
-        self.load_stage_coordinates()
+        # self.load_stage_coordinates()
         self.log(f'Connected to stage: {self.hw_proxy.stage_serial}')
         self.enable_user_controls()
         for i in range(3):
@@ -334,8 +310,7 @@ class StageUI(QMainWindow):
     def disable_user_controls(self):
         user_controls = [self.ui.btn_x_minus, self.ui.btn_x_plus, self.ui.btn_y_minus, self.ui.btn_y_plus,
                          self.ui.btn_z_minus, self.ui.btn_z_plus, self.ui.btn_home, self.ui.btn_load,
-                         self.ui.btn_working, self.ui.btn_mouse, self.ui.btn_stop, self.ui.btn_retract,
-                         self.ui.btn_extend]
+                         self.ui.btn_working, self.ui.btn_mouse, self.ui.btn_stop ]
 
         for control in user_controls:
             control.setEnabled(False)
@@ -343,8 +318,7 @@ class StageUI(QMainWindow):
     def enable_user_controls(self):
         user_controls = [self.ui.btn_x_minus, self.ui.btn_x_plus, self.ui.btn_y_minus, self.ui.btn_y_plus,
                          self.ui.btn_z_minus, self.ui.btn_z_plus, self.ui.btn_home, self.ui.btn_load,
-                         self.ui.btn_working, self.ui.btn_mouse, self.ui.btn_stop, self.ui.btn_retract,
-                         self.ui.btn_extend]
+                         self.ui.btn_working, self.ui.btn_mouse, self.ui.btn_stop]
 
         for control in user_controls:
             control.setEnabled(True)
@@ -373,14 +347,10 @@ class StageUI(QMainWindow):
             if modifiers == (QtCore.Qt.ControlModifier | QtCore.Qt.ShiftModifier):
                 if self.admin_enabled:
                     self.admin_enabled = False
-                    self.ui.toolBox.setItemEnabled(1, False)
-                    self.ui.toolBox.setCurrentIndex(0)
                 else:
                     if self.authenticate_admin():
                         logging.info('Admin mode enabled.')
                         self.admin_enabled = True
-                        self.ui.toolBox.setItemEnabled(1, True)
-                        self.ui.toolBox.setCurrentIndex(1)
             else:
                 self.axis_step(0, 1)
         elif event.key() == QtCore.Qt.Key_W:
@@ -416,6 +386,7 @@ def main():
     Boilerplate PyQT init
     :return:
     """
+    visual_behavior.init_log()
     app = QApplication(sys.argv)
     main_window = StageUI()
     main_window.setFixedWidth(600)

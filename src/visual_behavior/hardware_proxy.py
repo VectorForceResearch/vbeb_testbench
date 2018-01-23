@@ -1,7 +1,5 @@
-from aibsmw import ZROHost, RemoteObjectService
-from visual_behavior import stage, nidaqio, source_project_configuration, init_log
+from visual_behavior import stage, nidaqio, source_project_configuration
 import logging
-import argparse
 import asyncio
 import numpy as np
 import threading
@@ -99,14 +97,20 @@ class RemoteStageController(object):
     def extend_lickspout(self):
         logging.info('extending lickspout')
         self._daq.air_sol_1.write(np.ones(10, dtype=np.uint8))
-        self._daq.air_sol_2.write(np.zeros(10, dtype=np.uint8))
-
+        #self._daq.air_sol_2.write(np.zeros(10, dtype=np.uint8))
 
     def retract_lickspout(self):
         logging.info('retracting lickspout')
-        self._daq.air_sol_1.write(np.zeros(10, dtype=np.uint8))
+        #self._daq.air_sol_1.write(np.zeros(10, dtype=np.uint8))
         self._daq.air_sol_2.write(np.ones(10, dtype=np.uint8))
 
+    def signal_water_sol_1(self):
+        logging.info('signaling water solenoid 1')
+        self._daq.water_sol_1.write(np.ones(10, dtype=np.uint8))
+
+    def signal_water_sol_2(self):
+        logging.info('signaling water solenoid 2')
+        self._daq.water_sol_2.write(np.ones(10, dtype=np.uint8))
 
     def setup_stage(self):
         stage_ = stage.PhidgetStage(x_channel=self.config.phidget.channels.x,
@@ -123,6 +127,8 @@ class RemoteStageController(object):
         daq = nidaqio.NIDAQio()
         daq.create_digital_out_task('air_sol_1', self.config.nidaq.air_solenoid_1)
         daq.create_digital_out_task('air_sol_2', self.config.nidaq.air_solenoid_2)
+        daq.create_digital_out_task('water_sol_1', self.config.nidaq.water_solenoid_1)
+        daq.create_digital_out_task('water_sol_2', self.config.nidaq.water_solenoid_2)
         daq.create_digital_in_task('x_limit', self.config.nidaq.limit_switch_x)
         daq.create_digital_in_task('y_limit', self.config.nidaq.limit_switch_y)
         daq.create_digital_in_task('z_limit', self.config.nidaq.limit_switch_z)
@@ -218,20 +224,3 @@ class RemoteStageController(object):
     def move_to(self, coords):
         self._stage.move_to(coords)
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--port', help='port to run the remote service on', type=int)
-    args = parser.parse_args()
-
-    init_log(override_local=False)
-    config = source_project_configuration('visual_behavior_v1.yml', override_local=False)
-
-    port = args.port or config.phidget.port
-    remote = RemoteStageController()
-    host = ZROHost(remote)
-    host.add_service(RemoteObjectService, service_host=('*', port))
-    remote.start_hardware()
-    host.start()
-
-if __name__ == '__main__':
-    main()

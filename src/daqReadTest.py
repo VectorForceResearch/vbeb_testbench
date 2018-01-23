@@ -6,6 +6,9 @@ import time
 
 tasks = {}
 
+
+
+
 for idx in [5, 3, 1]:
     task = Task()
     print(f'creating task for DI Channel: Dev9/port0/line{idx}')

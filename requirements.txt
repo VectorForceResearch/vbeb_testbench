@@ -5,5 +5,4 @@ redis
 numpy
 pydaqmx
 pyqt5
-aibsmw
 phidget22
