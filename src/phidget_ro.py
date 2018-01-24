@@ -154,7 +154,7 @@ class RemoteStageController(object):
         """
 
         while self._monitor_limits:
-            if not self._ignore_limits:
+            if self._ignore_limits:
                 continue
 
             for axis, task in self._limits.items():
