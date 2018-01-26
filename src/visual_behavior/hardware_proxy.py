@@ -134,6 +134,9 @@ class RemoteStageController(object):
         daq.create_digital_in_task('z_limit', self.config.nidaq.limit_switch_z)
         daq.create_analog_out_voltage_task('clamp_0', self.config.nidaq.clamp_0)
         daq.create_analog_out_voltage_task('clamp_1', self.config.nidaq.clamp_1)
+        daq.create_analog_in_voltage_task('temp', self.config.nidaq.temp)
+        daq.create_analog_in_voltage_task('encoder_ref', self.config.nidaq.encoder_ref)
+        daq.create_analog_in_voltage_task('encoder_signal', self.config.nidaq.encoder_signal)
 
         logging.info(f'connected to nidaq device {daq.device_name}')
         return daq
@@ -151,6 +154,8 @@ class RemoteStageController(object):
         self.monitor_thread.start()
         self._stage._queue_active = True
         self.stage_thread.start()
+        self._daq.temp = True
+        self._daq.encoder_ref = True
 
 
     def monitor_limits(self):
@@ -202,7 +207,7 @@ class RemoteStageController(object):
                 self.zero_stage()
                 logging.info('staged homed')
             else:
-                self.drive_axis_home(axis)
+                self.drive_axes_home(axis)
 
     def drive_axis_home(self, axis):
         logging.info(f'driving axis {axis} to home')
@@ -212,7 +217,7 @@ class RemoteStageController(object):
 
     def zero_stage(self):
         logging.info('stage axis zeroed')
-        self._stage.zero_axes()
+        self._stage.zero_axis()
 
     def home_stage(self):
         logging.info('homing stage')
@@ -224,3 +229,16 @@ class RemoteStageController(object):
     def move_to(self, coords):
         self._stage.move_to(coords)
 
+
+   def temp_value(self, temp_meas):
+       logging.info('temperature')
+       self._daq.temp(temp_meas)
+
+   def encoder_movement(self):
+        logging.info('encoder motion')
+        encoder_position =
+        encoder_velocity =
+        encoder_acceleration =
+
+        self._daq.encoder_ref()
+        self._daq.encoder_signal()

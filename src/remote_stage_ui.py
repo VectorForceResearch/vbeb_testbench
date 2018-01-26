@@ -183,6 +183,23 @@ class StageUI(QMainWindow):
         engaged = self.stage.is_engaged
         limits = self.stage.limits
         position = self.stage.position
+        #self.ui.lbl_temperature.setText('Temp: ', signal_temp_value) 'need a refresh frequency'
+
+        # if any(motion):
+            # self.ui.lbl_encoder_position.setText('Position: ', signal_encoder_velocity)
+        # else:
+            # self.ui.lbl_encoder_position.setText('Position: ')
+
+        #if any(motion):
+            #self.ui.lbl_encoder_velocity.setText('Velocity: ', signal_encoder_velocity)
+         #else:
+            #self.ui.lbl_encoder_velocity.setText('Velocity: ')
+
+        # if any(motion):
+            # self.ui.lbl_encoder_acceleration.setText('Velocity: ', signal_encoder_velocity)
+        # else:
+            # self.ui.lbl_encoder_acceleration.setText('Velocity: ')
+
         if any(moving):
             self.ui.lbl_status.setText('Status: Stage Moving')
         else:
@@ -284,6 +301,12 @@ class StageUI(QMainWindow):
 
     def signal_water_sol_2(self):
         self.hw_proxy.signal_water_sol_2()
+
+    def signal_temp_value(self):
+        self.hw_proxy.signal_temp()
+
+    def signal_encoder_movement(self):
+        self.hw_proxy.signal_encoder_movement()
 
     def signal_move_to(self):
         try:

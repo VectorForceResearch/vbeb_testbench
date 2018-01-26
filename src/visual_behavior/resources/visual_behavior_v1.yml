@@ -57,4 +57,9 @@ nidaq: # lines resolve to /dev9/port0/line5 for example
     # analog out
     clamp_0: ao0
     clamp_1: ao1
+
+    # analog in
+     temp: ai6
+     encoder_vref: ai3
+     encoder_vsignal: ai2
 ...
